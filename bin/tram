@@ -20,7 +20,7 @@ const fs = require('fs');
 const path = require('path');
 const { evaluateExpectations } = require('../lib/assertions');
 
-const SUPPORTED_MANIFEST_VERSION = '0.1';
+const SUPPORTED_MANIFEST_VERSION = '0.2';
 
 async function main() {
   try {
@@ -247,7 +247,60 @@ function validateTests(tests, errors) {
     if (test.bodyType && !VALID_BODY_TYPES.includes(test.bodyType)) {
       errors.push(`${prefix}.bodyType unsupported value: ${test.bodyType}.`);
     }
+
+    validateCapture(test.capture, `${prefix}.capture`, errors);
   });
+}
+
+function validateCapture(capture, prefix, errors) {
+  if (capture === undefined) return;
+
+  if (!capture || typeof capture !== 'object' || Array.isArray(capture)) {
+    errors.push(`${prefix} must be an object.`);
+    return;
+  }
+
+  for (const [name, spec] of Object.entries(capture)) {
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) {
+      errors.push(`${prefix}.${name} has invalid capture name.`);
+    }
+
+    if (typeof spec === 'string') {
+      validateCapturePath(spec, `${prefix}.${name}`, errors);
+      continue;
+    }
+
+    if (!spec || typeof spec !== 'object' || Array.isArray(spec)) {
+      errors.push(`${prefix}.${name} must be a string or object.`);
+      continue;
+    }
+
+    if (typeof spec.from !== 'string') {
+      errors.push(`${prefix}.${name}.from must be a string.`);
+    } else {
+      validateCapturePath(spec.from, `${prefix}.${name}.from`, errors);
+    }
+
+    if (spec.optional !== undefined && typeof spec.optional !== 'boolean') {
+      errors.push(`${prefix}.${name}.optional must be a boolean.`);
+    }
+  }
+}
+
+function validateCapturePath(capturePath, prefix, errors) {
+  if (!capturePath) {
+    errors.push(`${prefix} capture path must not be empty.`);
+    return;
+  }
+
+  if (
+    capturePath !== 'status' &&
+    capturePath !== 'rawBody' &&
+    !capturePath.startsWith('body.') &&
+    !capturePath.startsWith('headers.')
+  ) {
+    errors.push(`${prefix} unsupported capture path: ${capturePath}.`);
+  }
 }
 
 /*
@@ -279,10 +332,11 @@ async function runSuite(manifest) {
   const results = [];
   const tests = manifest.tests || [];
   const runtimeData = initializeRuntimeData(manifest.data || {});
+  const runtimeCapture = {};
 
   for (let index = 0; index < tests.length; index += 1) {
     const test = tests[index];
-    const testResult = await runTest({ manifest, runtimeData, test, index });
+    const testResult = await runTest({ manifest, runtimeData, runtimeCapture, test, index });
     results.push(testResult);
   }
 
@@ -300,7 +354,7 @@ async function runSuite(manifest) {
   };
 }
 
-async function runTest({ manifest, runtimeData, test, index }) {
+async function runTest({ manifest, runtimeData, runtimeCapture, test, index }) {
   const id = test.id || `test-${index + 1}`;
   const enabled = test.enabled !== false;
 
@@ -321,15 +375,20 @@ async function runTest({ manifest, runtimeData, test, index }) {
 
   validateTest(test, index);
 
-  const request = buildRequest({ manifest, runtimeData, test });
+  const request = buildRequest({ manifest, runtimeData, runtimeCapture, test });
   const started = Date.now();
 
   try {
     const response = await executeRequest(request, manifest.config.timeoutMs);
     const durationMs = Date.now() - started;
-    const resolvedExpect = resolveRuntimeTokens(clone(test.expect),runtimeData);
-    const assertions = evaluateExpectations({expect: resolvedExpect,response});
-    const passed = assertions.every((assertion) => assertion.passed);
+    const resolvedExpect = resolveRuntimeTokens(clone(test.expect), runtimeData, runtimeCapture);
+    const assertions = evaluateExpectations({ expect: resolvedExpect, response });
+    const expectationsPassed = assertions.every((assertion) => assertion.passed);
+    const captureAssertions = expectationsPassed
+      ? applyCapture(test.capture, response, runtimeCapture)
+      : [];
+    const allAssertions = assertions.concat(captureAssertions);
+    const passed = allAssertions.every((assertion) => assertion.passed);
 
     return {
       id,
@@ -347,7 +406,7 @@ async function runTest({ manifest, runtimeData, test, index }) {
       durationMs,
       request: requestForReport(request),
       response: responseForReport(response),
-      assertions
+      assertions: allAssertions
     };
   } catch (error) {
     const durationMs = Date.now() - started;
@@ -393,7 +452,7 @@ function validateTest(test, index) {
   }
 }
 
-function buildRequest({ manifest, runtimeData, test }) {
+function buildRequest({ manifest, runtimeData, runtimeCapture, test }) {
   const config = manifest.config || {};
 
   const method = String(test.method || 'GET').toUpperCase();
@@ -402,8 +461,8 @@ function buildRequest({ manifest, runtimeData, test }) {
     ...(test.headers || {})
   };
 
-  const query = resolveRuntimeTokens(resolveValue(test.query, runtimeData), runtimeData);
-  const requestPath = resolveRuntimeTokens(test.path, runtimeData);
+  const query = resolveRuntimeTokens(resolveValue(test.query, runtimeData), runtimeData, runtimeCapture);
+  const requestPath = resolveRuntimeTokens(test.path, runtimeData, runtimeCapture);
   const url = buildUrl(config.baseUrl, requestPath, query, runtimeData);
 
   const request = {
@@ -417,7 +476,7 @@ function buildRequest({ manifest, runtimeData, test }) {
 
   if (Object.prototype.hasOwnProperty.call(test, 'body')) {
     const bodyType = test.bodyType || 'json';
-    const resolvedBody = resolveRuntimeTokens(resolveValue(test.body, runtimeData), runtimeData);
+    const resolvedBody = resolveRuntimeTokens(resolveValue(test.body, runtimeData), runtimeData, runtimeCapture);
 
     request.bodyType = bodyType;
     request.body = encodeBody(resolvedBody, bodyType, request.headers);
@@ -568,7 +627,7 @@ function resolveValue(value, runtimeData) {
   return clone(value);
 }
 
-function resolveRuntimeTokens(value, runtimeData) {
+function resolveRuntimeTokens(value, runtimeData, runtimeCapture = {}) {
   if (typeof value === 'string') {
     return value.replace(/\$\{([^}]+)\}/g, (_match, tokenName) => {
       if (tokenName.startsWith('data.')) {
@@ -582,18 +641,29 @@ function resolveRuntimeTokens(value, runtimeData) {
         return String(resolved.value);
       }
 
+      if (tokenName.startsWith('capture.')) {
+        const capturePath = tokenName.slice('capture.'.length);
+        const resolved = getByPath(runtimeCapture, capturePath);
+
+        if (!resolved.exists) {
+          throw new Error(`Capture reference not found: ${tokenName}`);
+        }
+
+        return String(resolved.value);
+      }
+
       return generateToken(tokenName);
     });
   }
 
   if (Array.isArray(value)) {
-    return value.map((item) => resolveRuntimeTokens(item, runtimeData));
+    return value.map((item) => resolveRuntimeTokens(item, runtimeData, runtimeCapture));
   }
 
   if (value && typeof value === 'object') {
     const result = {};
     for (const [key, child] of Object.entries(value)) {
-      result[key] = resolveRuntimeTokens(child, runtimeData);
+      result[key] = resolveRuntimeTokens(child, runtimeData, runtimeCapture);
     }
     return result;
   }
@@ -648,6 +718,80 @@ function getByPath(source, dotPath) {
   }
 
   return { exists: true, value: current };
+}
+
+function applyCapture(capture, response, runtimeCapture) {
+  if (capture === undefined) return [];
+
+  const assertions = [];
+
+  for (const [name, spec] of Object.entries(capture)) {
+    const captureSpec = normalizeCaptureSpec(spec);
+    const resolved = getCaptureValue(response, captureSpec.from);
+
+    if (!resolved.exists) {
+      const passed = captureSpec.optional === true;
+      assertions.push({
+        passed,
+        type: 'capture',
+        target: name,
+        expected: captureSpec.from,
+        actual: undefined,
+        message: passed
+          ? `Optional capture skipped: ${name} from ${captureSpec.from}`
+          : `Capture failed: ${name} not found at ${captureSpec.from}`
+      });
+      continue;
+    }
+
+    runtimeCapture[name] = clone(resolved.value);
+    assertions.push({
+      passed: true,
+      type: 'capture',
+      target: name,
+      expected: captureSpec.from,
+      actual: resolved.value,
+      message: `Captured ${name} from ${captureSpec.from}`
+    });
+  }
+
+  return assertions;
+}
+
+function normalizeCaptureSpec(spec) {
+  if (typeof spec === 'string') {
+    return { from: spec, optional: false };
+  }
+
+  return {
+    from: spec.from,
+    optional: spec.optional === true
+  };
+}
+
+function getCaptureValue(response, capturePath) {
+  if (capturePath === 'status') {
+    return { exists: true, value: response.status };
+  }
+
+  if (capturePath === 'rawBody') {
+    return { exists: true, value: response.rawBody };
+  }
+
+  if (capturePath.startsWith('body.')) {
+    return getByPath(response.body, capturePath.slice('body.'.length));
+  }
+
+  if (capturePath.startsWith('headers.')) {
+    const headerName = capturePath.slice('headers.'.length).toLowerCase();
+    const value = getHeaderValue(response.headers, headerName);
+    return {
+      exists: value !== undefined,
+      value
+    };
+  }
+
+  return { exists: false, value: undefined };
 }
 
 function generateToken(tokenName) {

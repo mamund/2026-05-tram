@@ -1,0 +1,102 @@
+{
+  "name": "Task Management API Capture Tests",
+  "manifestVersion": "0.2",
+  "version": "1.0.0",
+  "description": "Behavioral tests for capture support in the sample task-management API.",
+  "author": "Mike Amundsen",
+  "created": "2026-07-02",
+  "updated": "2026-07-02",
+  "tags": [
+    "tasks",
+    "http",
+    "behavioral-testing",
+    "capture",
+    "nodejs"
+  ],
+  "config": {
+    "baseUrl": "http://localhost:3000",
+    "timeoutMs": 5000,
+    "defaultHeaders": {
+      "accept": "application/json"
+    }
+  },
+  "data": {
+    "task.capture.valid": {
+      "task": {
+        "id": "${randomId}",
+        "title": "Capture test task",
+        "status": "active",
+        "priority": 3,
+        "assignedUser": "alice"
+      }
+    }
+  },
+  "tests": [
+    {
+      "id": "task-create-capture-id",
+      "name": "Create task and capture id",
+      "tags": [
+        "tasks",
+        "create",
+        "capture",
+        "happy-path"
+      ],
+      "method": "POST",
+      "path": "/tasks",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "bodyType": "json",
+      "body": "$data.task.capture.valid",
+      "expect": {
+        "status": 201,
+        "body": [
+          {
+            "path": "$.id",
+            "type": "string"
+          },
+          {
+            "path": "$.title",
+            "equals": "Capture test task"
+          },
+          {
+            "path": "$.status",
+            "equals": "active"
+          }
+        ]
+      },
+      "capture": {
+        "createdTaskId": "body.id"
+      }
+    },
+    {
+      "id": "task-get-captured-id",
+      "name": "Get task using captured id",
+      "tags": [
+        "tasks",
+        "lookup",
+        "capture",
+        "happy-path"
+      ],
+      "method": "GET",
+      "path": "/tasks/${capture.createdTaskId}",
+      "expect": {
+        "status": 200,
+        "body": [
+          {
+            "path": "$.id",
+            "equals": "${capture.createdTaskId}"
+          },
+          {
+            "path": "$.title",
+            "equals": "Capture test task"
+          },
+          {
+            "path": "$.status",
+            "equals": "active"
+          }
+        ]
+      }
+    }
+  ]
+}
