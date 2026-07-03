@@ -1,6 +1,6 @@
 {
   "name": "Task Management API Tests",
-  "manifestVersion": "0.2",
+  "manifestVersion": "0.1",
   "version": "1.0.0",
   "description": "Behavioral tests for the sample task-management API.",
   "author": "Mike Amundsen",

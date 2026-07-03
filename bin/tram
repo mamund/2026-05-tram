@@ -7,6 +7,7 @@
  * Dependency-free HTTP API test runner.
  *
  * Usage:
+ *   tram api-tests.json --validate
  *   tram api-tests.json
  *   tram api-tests.json --verbose
  *   tram api-tests.json --report results.json
@@ -20,7 +21,8 @@ const fs = require('fs');
 const path = require('path');
 const { evaluateExpectations } = require('../lib/assertions');
 
-const SUPPORTED_MANIFEST_VERSION = '0.2';
+const SUPPORTED_MANIFEST_VERSIONS = ['0.1', '0.2'];
+const CURRENT_MANIFEST_VERSION = '0.2';
 
 async function main() {
   try {
@@ -127,6 +129,7 @@ function printUsage() {
   console.log('  -h, --help             Show help');
   console.log('');
   console.log('Examples:');
+  console.log('  tram api-tests.json --validate');
   console.log('  tram api-tests.json');
   console.log('  tram api-tests.json --verbose');
   console.log('  tram api-tests.json --report results.json');
@@ -183,9 +186,13 @@ function validateManifest(manifest) {
     errors.push('Manifest must be a JSON object.');
   }
 
-  if (manifest?.manifestVersion && manifest.manifestVersion !== SUPPORTED_MANIFEST_VERSION) {
+  if (
+    manifest?.manifestVersion &&
+    !SUPPORTED_MANIFEST_VERSIONS.includes(manifest.manifestVersion)
+  ) {
     errors.push(
-      `Unsupported manifestVersion ${manifest.manifestVersion}. Supported version is ${SUPPORTED_MANIFEST_VERSION}.`
+      `Unsupported manifestVersion ${manifest.manifestVersion}. ` +
+      `Supported versions are ${SUPPORTED_MANIFEST_VERSIONS.join(', ')}.`
     );
   }
 
@@ -303,31 +310,6 @@ function validateCapturePath(capturePath, prefix, errors) {
   }
 }
 
-/*
-function validateManifest(manifest) {
-  if (!manifest || typeof manifest !== 'object') {
-    throw new Error('Manifest must be a JSON object.');
-  }
-
-  if (manifest.manifestVersion && manifest.manifestVersion !== SUPPORTED_MANIFEST_VERSION) {
-    throw new Error(
-      `Unsupported manifestVersion ${manifest.manifestVersion}. Supported version is ${SUPPORTED_MANIFEST_VERSION}.`
-    );
-  }
-
-  if (!manifest.config || typeof manifest.config !== 'object') {
-    throw new Error('Manifest requires config.');
-  }
-
-  if (!manifest.config.baseUrl) {
-    throw new Error('Manifest requires config.baseUrl.');
-  }
-
-  if (!Array.isArray(manifest.tests)) {
-    throw new Error('Manifest requires tests array.');
-  }
-}
-*/
 async function runSuite(manifest) {
   const results = [];
   const tests = manifest.tests || [];
