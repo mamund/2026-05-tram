@@ -98,9 +98,7 @@ manifest validation
         ↓
 TRAM runner
         ↓
-capture
-        ↓
-behavioral evidence
+assertion results
 ```
 
 The important artifact is the manifest:
@@ -313,12 +311,6 @@ Correct string interpolation:
 "path": "/tasks/${data.knownTaskId}"
 ```
 
-Captured response values:
-
-```json
-"path": "/tasks/${capture.taskId}"
-```
-
 ---
 
 # Shared data and runtime interpolation
@@ -374,40 +366,6 @@ Example:
 ```
 
 This enables coordinated multi-step behavioral flows without introducing custom scripting.
-
----
-
-# Capture values between requests
-
-Manifest data defines values before execution begins.
-
-Capture records values observed while the test suite executes.
-
-Example:
-
-```json
-{
-  "capture": {
-    "taskId": "body.id"
-  }
-}
-```
-
-Later requests can reuse the observed value:
-
-```json
-{
-  "path": "/tasks/${capture.taskId}"
-}
-```
-
-This allows behavioral workflows to remain independent of server-generated identifiers while keeping the manifest declarative.
-
-See also:
-
-```text
-examples/api-tests-capture.json
-```
 
 ---
 
@@ -908,29 +866,6 @@ These experiments help reveal:
 
 ---
 
-## Break a capture
-
-Change:
-
-```json
-"capture": {
-  "taskId": "body.id"
-}
-```
-
-to:
-
-```json
-"capture": {
-  "taskId": "body.noSuchProperty"
-}
-```
-
-Then rerun the suite.
-
-The request succeeds, but the test fails because the required captured value cannot be observed in the response.
-
----
 # Understand the current philosophy
 
 TRAM currently emphasizes:

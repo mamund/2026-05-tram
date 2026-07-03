@@ -248,7 +248,9 @@ The implementation underneath a system may evolve rapidly over time. Behavioral 
 
 ## Observations can become evidence
 
-Some API behaviors produce values that are not known until runtime, such as generated identifiers or hypermedia links. TRAM's capture feature records those observed values and makes them available to later requests. This allows behavioral models to remain declarative while expressing workflows that depend on server-generated state.
+Behavioral verification often depends on observations made during earlier interactions. Some API behaviors produce values that are not known until runtime, such as generated identifiers or hypermedia links. TRAM's capture feature records those observed values and makes them available to later requests. This allows behavioral models to remain declarative while expressing workflows that depend on server-generated state.
 
-Capture is an observation mechanism rather than a scripting mechanism. The manifest does not compute new values or direct control flow; it records what the API actually produced and reuses that evidence in subsequent interactions.
+Capture is an observation mechanism rather than a scripting mechanism. The manifest does not compute new values or direct control flow. Instead, it records what the API actually produced—including identifiers, affordances, and other observable values—and reuses that evidence in subsequent interactions.
+
+In this sense, capture extends the role of assertions beyond verification alone. The manifest records observations, expresses them as executable behavior, and preserves the resulting evidence for later interactions. Observable behavior becomes a reusable operational artifact rather than a transient detail of a single request.
 
