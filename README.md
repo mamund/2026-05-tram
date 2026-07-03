@@ -62,6 +62,23 @@ Earlier (`0.1`) manifests remain supported and continue to execute without modif
 
 ---
 
+## Output artifacts
+
+A TRAM run can produce several complementary artifacts.
+
+| Artifact | Purpose |
+|---|---|
+| Manifest | Defines the expected API behavior. |
+| HTTP Transcript | Records the observed HTTP request/response conversation. |
+| Report | Evaluates the observed behavior against the manifest. |
+| Evidence | The complete collection of artifacts from a test run. |
+
+The transcript and report serve different purposes.
+
+The HTTP Transcript records what happened during execution. The Report evaluates whether the observed behavior satisfied the behavioral expectations expressed in the manifest.
+
+---
+
 ## Smallest complete TRAM manifest
 
 ```json
@@ -338,13 +355,13 @@ Current implementation includes:
 * stable run-scoped variables
 * runtime interpolation (`${data.*}`)
 * object injection (`$data.*`)
-* Capture values from responses and reuse them in later requests.
+* capture values from responses and reuse them in later requests
 * happy-path and sad-path testing
 * JSON, form, and text request body support
 * workflow-oriented behavioral modeling
 * machine-readable reporting
 * real API validation against a sample CRUD-style task API
-* Generate HTTP transcripts showing the observed request/response conversation.
+* HTTP transcript generation
 
 ---
 
@@ -375,11 +392,11 @@ tram <manifest-file> [options]
 Options:
 
 ```text
--v, --verbose          Print passing assertion details
--r, --report <file>    Write JSON report to file
---transcript <fiile>   Generate an HTTP transcript           
---validate             Validate the manifest without making HTTP requests
--h, --help             Show help
+-v, --verbose              Print passing assertion details
+-r, --report <file>        Write behavioral report (JSON)
+-t, --transcript <file>    Write HTTP transcript
+--validate                 Validate the manifest without making HTTP requests
+-h, --help                 Show help
 ```
 
 ---
@@ -796,10 +813,24 @@ Verbose mode:
 tram api-tests.json --verbose
 ```
 
+Generate an HTTP transcript:
+
+```bash
+tram api-tests.json --transcript transcript.http
+```
+
 Generate a machine-readable report:
 
 ```bash
-tram api-tests.json --report results.json
+tram api-tests.json --report report.json
+```
+
+Generate both artifacts:
+
+```bash
+tram api-tests.json \
+    --report report.json \
+    --transcript transcript.http
 ```
 
 ---
@@ -887,14 +918,15 @@ TRAM distinguishes between:
 
 ## Reporting philosophy
 
-TRAM emphasizes:
+TRAM can produce several complementary views of a test run.
 
-* low-noise console output
-* readable failures
-* behavior visibility
-* detailed machine-readable reports
+* concise console output
+* HTTP transcript of the observed conversation
+* machine-readable behavioral report
 
-The console output is intentionally concise by default.
+The transcript records the observed HTTP conversation.
+
+The report evaluates that conversation against the behavioral expectations expressed in the manifest.
 
 Manifest validation is treated as a first-class operation, allowing behavioral models to be reviewed independently of execution.
 
