@@ -1,0 +1,66 @@
+{
+  "name": "Task Management API Capture Runtime Failure Tests",
+  "manifestVersion": "0.2",
+  "version": "1.0.0",
+  "author": "Mike Amundsen",
+  "created": "2026-07-03",
+  "updated": "2026-07-03",
+  "config": {
+    "baseUrl": "http://localhost:3000",
+    "timeoutMs": 5000,
+    "defaultHeaders": {
+      "accept": "application/json"
+    }
+  },
+  "data": {
+    "task.capture.valid": {
+      "task": {
+        "id": "${randomId}",
+        "title": "Capture test task",
+        "status": "active",
+        "priority": 3,
+        "assignedUser": "alice"
+      }
+    }
+  },
+  "description": "Runtime-failure tests for TRAM capture behavior.",
+  "tags": [
+    "tasks",
+    "http",
+    "behavioral-testing",
+    "capture",
+    "nodejs",
+    "runtime-failure"
+  ],
+  "tests": [
+    {
+      "id": "task-create-required-capture-missing",
+      "name": "Required capture missing",
+      "tags": [
+        "tasks",
+        "capture",
+        "runtime-failure"
+      ],
+      "type": "sad-path",
+      "method": "POST",
+      "path": "/tasks",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "bodyType": "json",
+      "body": "$data.task.capture.valid",
+      "expect": {
+        "status": 201,
+        "body": [
+          {
+            "path": "$.id",
+            "type": "string"
+          }
+        ]
+      },
+      "capture": {
+        "missingValue": "body.noSuchProperty"
+      }
+    }
+  ]
+}

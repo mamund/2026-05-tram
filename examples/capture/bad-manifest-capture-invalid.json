@@ -1,0 +1,84 @@
+{
+  "name": "Invalid Capture Manifest",
+  "manifestVersion": "0.2",
+  "version": "1.0.0",
+  "author": "Mike Amundsen",
+  "created": "2026-07-03",
+  "updated": "2026-07-03",
+  "config": {
+    "baseUrl": "http://localhost:3000",
+    "timeoutMs": 5000,
+    "defaultHeaders": {
+      "accept": "application/json"
+    }
+  },
+  "data": {
+    "task.capture.valid": {
+      "task": {
+        "id": "${randomId}",
+        "title": "Capture test task",
+        "status": "active",
+        "priority": 3,
+        "assignedUser": "alice"
+      }
+    }
+  },
+  "description": "Invalid manifest used to prove capture validation rejects bad capture declarations.",
+  "tags": [
+    "tasks",
+    "http",
+    "behavioral-testing",
+    "capture",
+    "nodejs",
+    "bad-manifest"
+  ],
+  "tests": [
+    {
+      "id": "task-create-invalid-capture-name",
+      "name": "Invalid capture name",
+      "tags": [
+        "tasks",
+        "capture",
+        "bad-manifest"
+      ],
+      "method": "POST",
+      "path": "/tasks",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "bodyType": "json",
+      "body": "$data.task.capture.valid",
+      "expect": {
+        "status": 201
+      },
+      "capture": {
+        "123badName": "body.id"
+      }
+    },
+    {
+      "id": "task-create-invalid-optional-value",
+      "name": "Invalid optional capture value",
+      "tags": [
+        "tasks",
+        "capture",
+        "bad-manifest"
+      ],
+      "method": "POST",
+      "path": "/tasks",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "bodyType": "json",
+      "body": "$data.task.capture.valid",
+      "expect": {
+        "status": 201
+      },
+      "capture": {
+        "badOptional": {
+          "from": "body.id",
+          "optional": "yes"
+        }
+      }
+    }
+  ]
+}

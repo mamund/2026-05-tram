@@ -1,0 +1,169 @@
+{
+  "name": "Task Management API Capture Tests",
+  "manifestVersion": "0.2",
+  "version": "1.0.0",
+  "description": "Behavioral tests for TRAM capture support.",
+  "author": "Mike Amundsen",
+  "created": "2026-07-03",
+  "updated": "2026-07-03",
+  "tags": [
+    "tasks",
+    "http",
+    "behavioral-testing",
+    "capture",
+    "nodejs"
+  ],
+  "config": {
+    "baseUrl": "http://localhost:3000",
+    "timeoutMs": 5000,
+    "defaultHeaders": {
+      "accept": "application/json"
+    }
+  },
+  "data": {
+    "task.capture.valid": {
+      "task": {
+        "id": "${randomId}",
+        "title": "Capture test task",
+        "status": "active",
+        "priority": 3,
+        "assignedUser": "alice"
+      }
+    }
+  },
+  "tests": [
+    {
+      "id": "task-create-capture-id",
+      "name": "Create task and capture id",
+      "tags": [
+        "tasks",
+        "create",
+        "capture",
+        "happy-path"
+      ],
+      "method": "POST",
+      "path": "/tasks",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "bodyType": "json",
+      "body": "$data.task.capture.valid",
+      "expect": {
+        "status": 201,
+        "body": [
+          {
+            "path": "$.id",
+            "type": "string"
+          },
+          {
+            "path": "$.title",
+            "equals": "Capture test task"
+          },
+          {
+            "path": "$.status",
+            "equals": "active"
+          }
+        ]
+      },
+      "capture": {
+        "createdTaskId": "body.id",
+        "createdTaskTitle": "body.title",
+        "createdTaskStatus": "body.status"
+      }
+    },
+    {
+      "id": "task-get-captured-id",
+      "name": "Get task using captured id",
+      "tags": [
+        "tasks",
+        "lookup",
+        "capture",
+        "happy-path"
+      ],
+      "method": "GET",
+      "path": "/tasks/${capture.createdTaskId}",
+      "expect": {
+        "status": 200,
+        "body": [
+          {
+            "path": "$.id",
+            "equals": "${capture.createdTaskId}"
+          },
+          {
+            "path": "$.title",
+            "equals": "${capture.createdTaskTitle}"
+          },
+          {
+            "path": "$.status",
+            "equals": "${capture.createdTaskStatus}"
+          }
+        ]
+      }
+    },
+    {
+      "id": "task-create-capture-self-link",
+      "name": "Create task and capture self link",
+      "tags": [
+        "tasks",
+        "create",
+        "capture",
+        "hypermedia"
+      ],
+      "method": "POST",
+      "path": "/tasks",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "bodyType": "json",
+      "body": "$data.task.capture.valid",
+      "expect": {
+        "status": 201,
+        "body": [
+          {
+            "path": "$.id",
+            "type": "string"
+          },
+          {
+            "path": "$._links.self.href",
+            "type": "string"
+          }
+        ]
+      },
+      "capture": {
+        "selfHref": "body._links.self.href",
+        "selfTaskId": "body.id",
+        "selfTaskTitle": "body.title",
+        "selfTaskStatus": "body.status"
+      }
+    },
+    {
+      "id": "task-follow-captured-self-link",
+      "name": "Follow captured self link",
+      "tags": [
+        "tasks",
+        "lookup",
+        "capture",
+        "hypermedia"
+      ],
+      "method": "GET",
+      "path": "${capture.selfHref}",
+      "expect": {
+        "status": 200,
+        "body": [
+          {
+            "path": "$.id",
+            "equals": "${capture.selfTaskId}"
+          },
+          {
+            "path": "$.title",
+            "equals": "${capture.selfTaskTitle}"
+          },
+          {
+            "path": "$.status",
+            "equals": "${capture.selfTaskStatus}"
+          }
+        ]
+      }
+    }
+  ]
+}
