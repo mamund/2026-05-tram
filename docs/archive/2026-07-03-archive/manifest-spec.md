@@ -86,10 +86,6 @@ manifest validation
 runtime execution
         ↓
 assertion evaluation
-        ↓
-response capture
-        ↓
-next request
 ```
 
 ---
@@ -251,7 +247,6 @@ Example:
 | `bodyType` | No | Request body encoding |
 | `body` | No | Request body or `$data` reference |
 | `expect` | Yes | Expected response assertions |
-| `capture` | No | Capture values from the response for use by later requests |
 
 If present, test `id` values must be unique within a manifest.
 
@@ -392,62 +387,7 @@ Correct string interpolation:
 "path": "/tasks/${data.knownTaskId}"
 ```
 
-Captured response values:
-
-```json
-"path": "/tasks/${capture.taskId}"
-```
-
-Capture values become available only after the request that defines them has completed successfully.
-
 Unresolved interpolation references fail manifest execution.
-
----
-
-# Response capture
-
-The optional `capture` section records values observed in an HTTP response and makes them available to later requests.
-
-Simple example:
-
-```json
-"capture": {
-  "taskId": "body.id"
-}
-```
-
-Multiple values may be captured:
-
-```json
-"capture": {
-  "taskId": "body.id",
-  "title": "body.title",
-  "self": "body._links.self.href"
-}
-```
-
-Optional captures use the extended form:
-
-```json
-"capture": {
-  "etag": {
-    "from": "headers.etag",
-    "optional": true
-  }
-}
-```
-
-Supported capture sources:
-
-| Source | Example |
-|---|---|
-| Response body | `body.id` |
-| Nested body | `body._links.self.href` |
-| Response headers | `headers.location` |
-| HTTP status | `status` |
-| Raw response body | `rawBody` |
-
-Required captures cause the test to fail if the value cannot be observed. Optional captures are skipped when the value is absent.
 
 ---
 
