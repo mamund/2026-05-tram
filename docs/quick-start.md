@@ -8,7 +8,9 @@ The goal is not only to execute the sample tests, but to understand the relation
 * the manifest
 * the assertions
 * the runner
-* the resulting behavioral model
+* the HTTP transcript
+* the report
+* the resulting behavioral evidence
 
 TRAM treats API testing as behavioral modeling rather than framework scripting.
 
@@ -98,7 +100,9 @@ manifest validation
         ↓
 TRAM runner
         ↓
-capture
+HTTP transcript
+        ↓
+report
         ↓
 behavioral evidence
 ```
@@ -172,6 +176,7 @@ At this point, TRAM has:
 * validated manifest structure
 * initialized shared runtime data
 * executed each request
+* recorded the observed HTTP conversation
 * evaluated assertions
 * generated behavioral results
 
@@ -186,6 +191,45 @@ Before executing HTTP requests, TRAM validates:
 Invalid manifests fail before execution begins.
 
 The sample manifest includes tests spanning several behavioral layers, from endpoint availability through workflow-oriented validation.
+
+---
+
+# Generate an HTTP transcript
+
+TRAM can write the observed HTTP request/response conversation to a transcript file.
+
+```bash
+tram api-tests.json --transcript transcript.http
+```
+
+The transcript records the HTTP exchanges produced while executing the manifest.
+
+Example excerpt:
+
+```http
+> GET / HTTP/1.1
+> Host: localhost:3000
+> Accept: application/json
+
+< HTTP/1.1 200
+< content-type: application/json
+
+{
+  "name": "Task Management API"
+}
+```
+
+The HTTP transcript is distinct from the report.
+
+* the transcript records the observed HTTP conversation
+* the report evaluates that observed behavior against the manifest assertions
+
+To keep generated files separate from source examples, write outputs to an artifacts directory:
+
+```bash
+mkdir -p artifacts
+tram api-tests.json --transcript artifacts/transcript.http
+```
 
 ---
 
@@ -754,6 +798,15 @@ Verbose mode helps reveal:
 tram api-tests.json --report results.json
 ```
 
+You can also generate a report and transcript from the same run:
+
+```bash
+mkdir -p artifacts
+tram api-tests.json \
+  --report artifacts/results.json \
+  --transcript artifacts/transcript.http
+```
+
 This generates a detailed JSON report containing:
 
 * request details
@@ -762,6 +815,8 @@ This generates a detailed JSON report containing:
 * pass/fail summaries
 
 Only successfully validated manifests generate execution reports.
+
+The report is the evaluation artifact. The transcript is the observed HTTP conversation artifact. Together, they provide a compact evidence trail for the run.
 
 ---
 
@@ -998,6 +1053,8 @@ Recommended next experiments:
 * add collection assertions
 * add object-map assertions
 * improve reporting
+* generate HTTP transcripts
+* compare reports and transcripts
 * explore manifest ergonomics
 * experiment with hypermedia assertions
 * experiment with stable run-scoped variables

@@ -344,6 +344,7 @@ Current implementation includes:
 * workflow-oriented behavioral modeling
 * machine-readable reporting
 * real API validation against a sample CRUD-style task API
+* Generate HTTP transcripts showing the observed request/response conversation.
 
 ---
 
@@ -376,6 +377,7 @@ Options:
 ```text
 -v, --verbose          Print passing assertion details
 -r, --report <file>    Write JSON report to file
+--transcript <fiile>   Generate an HTTP transcript           
 --validate             Validate the manifest without making HTTP requests
 -h, --help             Show help
 ```
