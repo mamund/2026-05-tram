@@ -1,0 +1,309 @@
+diff --git a/README.md b/README.md
+index e717c45..082c1f2 100644
+--- a/README.md
++++ b/README.md
+@@ -374,10 +374,11 @@ tram <manifest-file> [options]
+ Options:
+ 
+ ```text
+--v, --verbose          Print passing assertion details
+--r, --report <file>    Write JSON report to file
+---validate             Validate the manifest without making HTTP requests
+--h, --help             Show help
++-v, --verbose              Print passing assertion details
++-r, --report <file>        Write JSON report to file
++-t, --transcript <file>    Write HTTP transcript to file
++--validate                 Validate the manifest without making HTTP requests
++-h, --help                 Show help
+ ```
+ 
+ ---
+@@ -800,6 +801,12 @@ Generate a machine-readable report:
+ tram api-tests.json --report results.json
+ ```
+ 
++Generate an HTTP transcript:
++
++```bash
++tram api-tests.json --transcript transcript.http
++```
++
+ ---
+ 
+ ## Documentation
+diff --git a/bin/tram b/bin/tram
+index baeb036..1c79b83 100755
+--- a/bin/tram
++++ b/bin/tram
+@@ -11,6 +11,7 @@
+  *   tram api-tests.json
+  *   tram api-tests.json --verbose
+  *   tram api-tests.json --report results.json
++ *   tram api-tests.json --transcript transcript.http
+  *
+  * Requires:
+  *   Node.js 18+
+@@ -29,7 +30,8 @@ async function main() {
+     const args = parseArgs(process.argv.slice(2));
+     const manifestPath = validateManifestPath(args.manifestPath);
+ 
+-    validateReportPath(args.reportPath);
++    validateOutputPath(args.reportPath, 'Report');
++    validateOutputPath(args.transcriptPath, 'Transcript');
+ 
+     const manifest = loadManifest(manifestPath);
+     validateManifest(manifest);
+@@ -47,6 +49,10 @@ async function main() {
+       writeJsonReport(args.reportPath, suiteResult);
+     }
+ 
++    if (args.transcriptPath) {
++      writeHttpTranscript(args.transcriptPath, suiteResult);
++    }
++
+     process.exit(suiteResult.summary.failed > 0 ? 1 : 0);
+   } catch (error) {
+     console.error(`ERROR: ${error.message}`);
+@@ -59,7 +65,8 @@ function parseArgs(argv) {
+     manifestPath: null,
+     verbose: false,
+     validate: false,
+-    reportPath: null
++    reportPath: null,
++    transcriptPath: null
+   };
+ 
+   if (argv.length === 0) {
+@@ -92,6 +99,13 @@ function parseArgs(argv) {
+       continue;
+     }
+ 
++    if (arg === '--transcript' || arg === '-t') {
++      const transcriptPath = requireOptionValue(arg, argv[i + 1]);
++      args.transcriptPath = transcriptPath;
++      i += 1;
++      continue;
++    }
++
+     if (arg.startsWith('-')) {
+       throw new Error(`Unknown option: ${arg}`);
+     }
+@@ -124,15 +138,18 @@ function printUsage() {
+   console.log('  tram <manifest-file> [options]');
+   console.log('');
+   console.log('Options:');
+-  console.log('  -v, --verbose          Print passing assertion details');
+-  console.log('  -r, --report <file>    Write JSON report to file');
+-  console.log('  -h, --help             Show help');
++  console.log('  -v, --verbose              Print passing assertion details');
++  console.log('  -r, --report <file>        Write JSON report to file');
++  console.log('  -t, --transcript <file>    Write HTTP transcript to file');
++  console.log('      --validate             Validate the manifest without making HTTP requests');
++  console.log('  -h, --help                 Show help');
+   console.log('');
+   console.log('Examples:');
+   console.log('  tram api-tests.json --validate');
+   console.log('  tram api-tests.json');
+   console.log('  tram api-tests.json --verbose');
+   console.log('  tram api-tests.json --report results.json');
++  console.log('  tram api-tests.json --transcript transcript.http');
+ }
+ 
+ function validateManifestPath(manifestPath) {
+@@ -151,20 +168,20 @@ function validateManifestPath(manifestPath) {
+   return fullPath;
+ }
+ 
+-function validateReportPath(reportPath) {
+-  if (!reportPath) return;
++function validateOutputPath(outputPath, label) {
++  if (!outputPath) return;
+ 
+-  const fullPath = path.resolve(process.cwd(), reportPath);
++  const fullPath = path.resolve(process.cwd(), outputPath);
+   const directory = path.dirname(fullPath);
+ 
+   if (!fs.existsSync(directory)) {
+-    throw new Error(`Report directory does not exist: ${directory}`);
++    throw new Error(`${label} directory does not exist: ${directory}`);
+   }
+ 
+   const stats = fs.statSync(directory);
+ 
+   if (!stats.isDirectory()) {
+-    throw new Error(`Report path parent is not a directory: ${directory}`);
++    throw new Error(`${label} path parent is not a directory: ${directory}`);
+   }
+ }
+ 
+@@ -863,6 +880,128 @@ function writeJsonReport(reportPath, suiteResult) {
+   fs.writeFileSync(fullPath, `${JSON.stringify(suiteResult, null, 2)}\n`, 'utf8');
+ }
+ 
++
++function writeHttpTranscript(transcriptPath, suiteResult) {
++  const fullPath = path.resolve(process.cwd(), transcriptPath);
++  fs.writeFileSync(fullPath, renderHttpTranscript(suiteResult), 'utf8');
++}
++
++function renderHttpTranscript(suiteResult) {
++  const lines = [];
++
++  lines.push('TRAM HTTP Transcript');
++  lines.push(`Suite: ${suiteResult.name}`);
++  lines.push(`Generated: ${new Date().toISOString()}`);
++  lines.push('');
++
++  for (const result of suiteResult.results) {
++    if (result.skipped) {
++      continue;
++    }
++
++    lines.push('============================================================');
++    lines.push(`${result.name} (${result.id})`);
++    lines.push('');
++    lines.push(renderTranscriptRequest(result.request));
++    lines.push('');
++    lines.push(renderTranscriptResponse(result.response));
++
++    const captureAssertions = (result.assertions || []).filter((assertion) => assertion.type === 'capture');
++    if (captureAssertions.length > 0) {
++      lines.push('');
++      lines.push('--- Captures ------------------------------------------------');
++      for (const assertion of captureAssertions) {
++        if (assertion.passed) {
++          lines.push(`${assertion.target} = ${formatTranscriptValue(assertion.actual)}`);
++        } else {
++          lines.push(`${assertion.target} = <not captured>`);
++        }
++      }
++    }
++
++    lines.push('');
++  }
++
++  return `${lines.join('\n')}\n`;
++}
++
++function renderTranscriptRequest(request) {
++  if (!request) {
++    return '> REQUEST UNAVAILABLE';
++  }
++
++  const url = new URL(request.url);
++  const lines = [];
++
++  lines.push(`> ${request.method} ${url.pathname}${url.search} HTTP/1.1`);
++  lines.push(`> Host: ${url.host}`);
++
++  for (const [name, value] of Object.entries(request.headers || {})) {
++    lines.push(`> ${name}: ${redactHeaderValue(name, value)}`);
++  }
++
++  if (request.body !== null && request.body !== undefined) {
++    lines.push('>');
++    lines.push(prefixTranscriptBody(formatTranscriptBody(request.body), '> '));
++  }
++
++  return lines.join('\n');
++}
++
++function renderTranscriptResponse(response) {
++  if (!response) {
++    return '< REQUEST FAILED';
++  }
++
++  const lines = [];
++
++  lines.push(`< HTTP/1.1 ${response.status}`);
++
++  for (const [name, value] of Object.entries(response.headers || {})) {
++    lines.push(`< ${name}: ${redactHeaderValue(name, value)}`);
++  }
++
++  if (response.rawBody) {
++    lines.push('<');
++    lines.push(prefixTranscriptBody(formatTranscriptBody(response.body), '< '));
++  }
++
++  return lines.join('\n');
++}
++
++function formatTranscriptBody(value) {
++  if (typeof value === 'string') {
++    return value;
++  }
++
++  return JSON.stringify(value, null, 2);
++}
++
++function prefixTranscriptBody(value, prefix) {
++  return String(value)
++    .split('\n')
++    .map((line) => `${prefix}${line}`)
++    .join('\n');
++}
++
++function formatTranscriptValue(value) {
++  if (typeof value === 'string') {
++    return JSON.stringify(value);
++  }
++
++  return JSON.stringify(value, null, 2);
++}
++
++function redactHeaderValue(name, value) {
++  const sensitiveHeaders = new Set(['authorization', 'cookie', 'set-cookie', 'x-api-key']);
++
++  if (sensitiveHeaders.has(String(name).toLowerCase())) {
++    return '[redacted]';
++  }
++
++  return value;
++}
++
+ function requestForReport(request) {
+   return {
+     method: request.method,
+diff --git a/docs/manifest-spec.md b/docs/manifest-spec.md
+index cdbcff4..6c40f03 100644
+--- a/docs/manifest-spec.md
++++ b/docs/manifest-spec.md
+@@ -74,7 +74,13 @@ Machine-readable report generation:
+ tram api-tests.json --report results.json
+ ```
+ 
+-Reports are generated only for successfully validated manifests.
++HTTP transcript generation:
++
++```bash
++tram api-tests.json --transcript transcript.http
++```
++
++Reports and transcripts are generated only for successfully validated manifests.
+ 
+ Typical execution flow:
+ 
+diff --git a/docs/quick-start.md b/docs/quick-start.md
+index 69b920a..d6556de 100644
+--- a/docs/quick-start.md
++++ b/docs/quick-start.md
+@@ -765,6 +765,18 @@ Only successfully validated manifests generate execution reports.
+ 
+ ---
+ 
++# Generate an HTTP transcript
++
++```bash
++tram api-tests.json --transcript transcript.http
++```
++
++This generates a cURL-like transcript of the observed HTTP conversation, including resolved requests, responses, and capture values. Assertion pass/fail details remain in the report output.
++
++Only successfully validated manifests generate HTTP transcripts.
++
++---
++
+ # Try intentionally breaking a test
+ 
+ One of the fastest ways to understand TRAM is to intentionally introduce a failure.
