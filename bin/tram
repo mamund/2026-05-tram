@@ -87,7 +87,7 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (arg === "--validate") {
+    if (arg === "--validate" || arg === '-c') {
       args.validate = true;
       continue;
     }
@@ -141,7 +141,7 @@ function printUsage() {
   console.log('  -v, --verbose              Print passing assertion details');
   console.log('  -r, --report <file>        Write JSON report to file');
   console.log('  -t, --transcript <file>    Write HTTP transcript to file');
-  console.log('      --validate             Validate the manifest without making HTTP requests');
+  console.log('  -c, --validate             Validate the manifest without making HTTP requests');
   console.log('  -h, --help                 Show help');
   console.log('');
   console.log('Examples:');
