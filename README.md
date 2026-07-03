@@ -52,6 +52,16 @@ Rather than focusing on implementation details, TRAM focuses on what can be obse
 
 ---
 
+## What's New in Manifest 0.2
+
+Manifest version **0.2** introduces response capture.
+
+Capture allows a test to extract values from an HTTP response (such as resource identifiers or hypermedia links) and reuse those values in subsequent requests. This makes it possible to write behavioral tests for APIs that generate identifiers dynamically or expose navigational affordances.
+
+Earlier (`0.1`) manifests remain supported and continue to execute without modification.
+
+---
+
 ## Smallest complete TRAM manifest
 
 ```json
@@ -82,6 +92,42 @@ This is the smallest useful complete TRAM manifest:
 
 ---
 
+## Capturing Values
+
+The `capture` property records values observed in an HTTP response and makes them available to later requests.
+
+```json
+{
+  "id": "task-create",
+  "method": "POST",
+  "path": "/tasks",
+  "bodyType": "json",
+  "body": "$data.task.capture.valid",
+  "expect": {
+    "status": 201
+  },
+  "capture": {
+    "createdTaskId": "body.id"
+  }
+}
+```
+
+Later tests can reference the captured value:
+
+```json
+{
+  "id": "task-get",
+  "method": "GET",
+  "path": "/tasks/${capture.createdTaskId}",
+  "expect": {
+    "status": 200
+  }
+}
+```
+
+Capture works with response bodies, headers, and other observable response values. See the Manifest Specification for the complete syntax.
+
+---
 ## Why TRAM exists
 
 TRAM explores a narrow problem:
@@ -292,6 +338,7 @@ Current implementation includes:
 * stable run-scoped variables
 * runtime interpolation (`${data.*}`)
 * object injection (`$data.*`)
+* Capture values from responses and reuse them in later requests.
 * happy-path and sad-path testing
 * JSON, form, and text request body support
 * workflow-oriented behavioral modeling
@@ -430,6 +477,24 @@ Later requests can reference the same value:
 }
 ```
 
+TRAM also supports response capture.
+
+Values observed in one response may be reused later in the same test run.
+
+Example:
+
+```json
+"capture": {
+  "taskId": "body.id"
+}
+```
+
+Later requests can reference the captured value:
+
+```json
+"path": "/tasks/${capture.taskId}"
+```
+
 This enables coordinated multi-step behavioral flows without introducing custom scripting.
 
 ---
@@ -465,6 +530,31 @@ Correct string interpolation:
 ```json
 "path": "/tasks/${data.knownTaskId}"
 ```
+
+Captured response values use:
+
+```json
+"${capture.taskId}"
+```
+
+These values are populated during test execution from earlier HTTP responses.
+
+### Capture Example
+
+The repository includes a dedicated capture example that demonstrates creating a resource, capturing values from the response, and using those values in subsequent requests.
+
+The repository includes a dedicated capture example:
+
+```text
+examples/api-tests-capture.json
+```
+
+The example demonstrates:
+
+- creating a resource
+- capturing values from the response
+- reusing those values in subsequent requests
+- following captured hypermedia links
 
 ---
 
@@ -769,6 +859,9 @@ Validation currently includes:
 * supported HTTP methods
 * supported request body types
 * duplicate test IDs
+* capture declarations
+* capture path syntax
+* capture identifier syntax
 
 Example:
 
@@ -809,7 +902,7 @@ Manifest validation is treated as a first-class operation, allowing behavioral m
 
 TRAM is intentionally conservative.
 
-v0.1 avoids:
+Current releases avoid:
 
 * framework dependencies
 * custom scripting
