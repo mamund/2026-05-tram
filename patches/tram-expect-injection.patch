@@ -1,0 +1,123 @@
+--- tram
++++ tram
+@@ -380,7 +380,11 @@
+   try {
+     const response = await executeRequest(request, manifest.config.timeoutMs);
+     const durationMs = Date.now() - started;
+-    const resolvedExpect = resolveRuntimeTokens(clone(test.expect), runtimeData, runtimeCapture);
++    const resolvedExpect = resolveRuntimeTokens(
++      resolveValue(test.expect, runtimeData, runtimeCapture),
++      runtimeData,
++      runtimeCapture
++    );
+     const assertions = evaluateExpectations({ expect: resolvedExpect, response });
+     const expectationsPassed = assertions.every((assertion) => assertion.passed);
+     const captureAssertions = expectationsPassed
+@@ -455,13 +459,29 @@
+   const config = manifest.config || {};
+ 
+   const method = String(test.method || 'GET').toUpperCase();
+-  const headers = {
+-    ...(config.defaultHeaders || {}),
+-    ...(test.headers || {})
+-  };
+-
+-  const query = resolveRuntimeTokens(resolveValue(test.query, runtimeData), runtimeData, runtimeCapture);
+-  const requestPath = resolveRuntimeTokens(test.path, runtimeData, runtimeCapture);
++  const headers = resolveRuntimeTokens(
++    resolveValue(
++      {
++        ...(config.defaultHeaders || {}),
++        ...(test.headers || {})
++      },
++      runtimeData,
++      runtimeCapture
++    ),
++    runtimeData,
++    runtimeCapture
++  );
++
++  const query = resolveRuntimeTokens(
++    resolveValue(test.query, runtimeData, runtimeCapture),
++    runtimeData,
++    runtimeCapture
++  );
++  const requestPath = resolveRuntimeTokens(
++    resolveValue(test.path, runtimeData, runtimeCapture),
++    runtimeData,
++    runtimeCapture
++  );
+   const url = buildUrl(config.baseUrl, requestPath, query, runtimeData);
+ 
+   const request = {
+@@ -475,7 +495,11 @@
+ 
+   if (Object.prototype.hasOwnProperty.call(test, 'body')) {
+     const bodyType = test.bodyType || 'json';
+-    const resolvedBody = resolveRuntimeTokens(resolveValue(test.body, runtimeData), runtimeData, runtimeCapture);
++    const resolvedBody = resolveRuntimeTokens(
++      resolveValue(test.body, runtimeData, runtimeCapture),
++      runtimeData,
++      runtimeCapture
++    );
+ 
+     request.bodyType = bodyType;
+     request.body = encodeBody(resolvedBody, bodyType, request.headers);
+@@ -606,21 +630,48 @@
+   return resolveBuiltInTokens(clone(data));
+ }
+ 
+-function resolveValue(value, runtimeData) {
+-  if (typeof value === 'string' && value.startsWith('$data.')) {
+-    const key = value.slice('$data.'.length);
++function resolveValue(value, runtimeData, runtimeCapture = {}) {
++  if (typeof value === 'string') {
++    if (value.startsWith('$data.')) {
++      const key = value.slice('$data.'.length);
++
++      if (Object.prototype.hasOwnProperty.call(runtimeData, key)) {
++        return clone(runtimeData[key]);
++      }
++
++      const resolved = getByPath(runtimeData, key);
++
++      if (!resolved.exists) {
++        throw new Error(`Data reference not found: ${value}`);
++      }
+ 
+-    if (Object.prototype.hasOwnProperty.call(runtimeData, key)) {
+-      return clone(runtimeData[key]);
++      return clone(resolved.value);
+     }
+ 
+-    const resolved = getByPath(runtimeData, key);
++    if (value.startsWith('$capture.')) {
++      const key = value.slice('$capture.'.length);
++      const resolved = getByPath(runtimeCapture, key);
+ 
+-    if (!resolved.exists) {
+-      throw new Error(`Data reference not found: ${value}`);
++      if (!resolved.exists) {
++        throw new Error(`Capture reference not found: ${value}`);
++      }
++
++      return clone(resolved.value);
+     }
+ 
+-    return clone(resolved.value);
++    return value;
++  }
++
++  if (Array.isArray(value)) {
++    return value.map((item) => resolveValue(item, runtimeData, runtimeCapture));
++  }
++
++  if (value && typeof value === 'object') {
++    const result = {};
++    for (const [key, child] of Object.entries(value)) {
++      result[key] = resolveValue(child, runtimeData, runtimeCapture);
++    }
++    return result;
+   }
+ 
+   return clone(value);

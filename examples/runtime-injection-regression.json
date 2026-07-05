@@ -1,0 +1,163 @@
+{
+  "name": "TRAM Runtime Injection Regression Tests",
+  "manifestVersion": "0.1",
+  "version": "1.0.0",
+  "description": "Regression tests for typed runtime object injection and string interpolation in requests and assertions.",
+  "author": "Mike Amundsen",
+  "tags": [
+    "tasks",
+    "runtime-injection",
+    "regression"
+  ],
+  "config": {
+    "baseUrl": "http://localhost:3000",
+    "timeoutMs": 5000,
+    "defaultHeaders": {
+      "accept": "application/json"
+    }
+  },
+  "data": {
+    "stable": {
+      "guid": "c3e59224-93d5-4b07-9317-6dc24eb586b3"
+    },
+    "expectedTask": {
+      "id": "c3e59224-93d5-4b07-9317-6dc24eb586b3",
+      "title": "Buy milk",
+      "status": "active",
+      "priority": 3,
+      "assignedUser": "alice"
+    },
+    "validStatuses": [
+      "active",
+      "pending",
+      "completed"
+    ],
+    "forbiddenStatuses": [
+      "cancelled",
+      "blocked"
+    ],
+    "defaultPriority": 3,
+    "filters.active": {
+      "status": "active"
+    },
+    "task.valid": {
+      "task": {
+        "id": "${randomId}",
+        "title": "Buy milk",
+        "status": "active",
+        "priority": 3,
+        "assignedUser": "alice"
+      }
+    }
+  },
+  "tests": [
+    {
+      "id": "runtime-injection-request-body",
+      "name": "Request body object injection still works",
+      "tags": [
+        "runtime-injection",
+        "request-body"
+      ],
+      "method": "POST",
+      "path": "/tasks",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "bodyType": "json",
+      "body": "$data.task.valid",
+      "expect": {
+        "status": 201,
+        "body": [
+          {
+            "path": "$",
+            "hasProperties": [
+              "id",
+              "title",
+              "status",
+              "priority",
+              "assignedUser",
+              "_links"
+            ]
+          },
+          {
+            "path": "$.title",
+            "equals": "Buy milk"
+          },
+          {
+            "path": "$.priority",
+            "equals": "$data.defaultPriority"
+          }
+        ]
+      }
+    },
+    {
+      "id": "runtime-injection-query-object",
+      "name": "Query object injection still works",
+      "tags": [
+        "runtime-injection",
+        "query"
+      ],
+      "method": "GET",
+      "path": "/tasks",
+      "query": "$data.filters.active",
+      "expect": {
+        "status": 200,
+        "body": [
+          {
+            "path": "$",
+            "isArray": true
+          },
+          {
+            "path": "$",
+            "each": {
+              "property": "status",
+              "equals": "active"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "runtime-injection-assertion-values",
+      "name": "Assertion object, array, and scalar injection works",
+      "tags": [
+        "runtime-injection",
+        "assertions"
+      ],
+      "method": "GET",
+      "path": "/tasks/${data.stable.guid}",
+      "expect": {
+        "status": 200,
+        "body": [
+          {
+            "path": "$.id",
+            "equals": "${data.stable.guid}"
+          },
+          {
+            "path": "$",
+            "hasProperties": [
+              "id",
+              "title",
+              "status",
+              "priority",
+              "assignedUser",
+              "_links"
+            ]
+          },
+          {
+            "path": "$.status",
+            "oneOf": "$data.validStatuses"
+          },
+          {
+            "path": "$.status",
+            "noneOf": "$data.forbiddenStatuses"
+          },
+          {
+            "path": "$.priority",
+            "equals": "$data.defaultPriority"
+          }
+        ]
+      }
+    }
+  ]
+}

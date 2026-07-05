@@ -1,0 +1,152 @@
+--- tram
++++ tram
+@@ -380,7 +380,10 @@
+   try {
+     const response = await executeRequest(request, manifest.config.timeoutMs);
+     const durationMs = Date.now() - started;
+-    const resolvedExpect = resolveRuntimeTokens(clone(test.expect), runtimeData, runtimeCapture);
++    const resolvedExpect = resolveRuntimeValue(clone(test.expect), {
++      data: runtimeData,
++      capture: runtimeCapture
++    });
+     const assertions = evaluateExpectations({ expect: resolvedExpect, response });
+     const expectationsPassed = assertions.every((assertion) => assertion.passed);
+     const captureAssertions = expectationsPassed
+@@ -453,16 +456,20 @@
+ 
+ function buildRequest({ manifest, runtimeData, runtimeCapture, test }) {
+   const config = manifest.config || {};
++  const runtimeContext = {
++    data: runtimeData,
++    capture: runtimeCapture
++  };
+ 
+   const method = String(test.method || 'GET').toUpperCase();
+-  const headers = {
++  const headers = resolveRuntimeValue({
+     ...(config.defaultHeaders || {}),
+     ...(test.headers || {})
+-  };
++  }, runtimeContext);
+ 
+-  const query = resolveRuntimeTokens(resolveValue(test.query, runtimeData), runtimeData, runtimeCapture);
+-  const requestPath = resolveRuntimeTokens(test.path, runtimeData, runtimeCapture);
+-  const url = buildUrl(config.baseUrl, requestPath, query, runtimeData);
++  const query = resolveRuntimeValue(test.query, runtimeContext);
++  const requestPath = resolveRuntimeValue(test.path, runtimeContext);
++  const url = buildUrl(config.baseUrl, requestPath, query);
+ 
+   const request = {
+     method,
+@@ -475,7 +482,7 @@
+ 
+   if (Object.prototype.hasOwnProperty.call(test, 'body')) {
+     const bodyType = test.bodyType || 'json';
+-    const resolvedBody = resolveRuntimeTokens(resolveValue(test.body, runtimeData), runtimeData, runtimeCapture);
++    const resolvedBody = resolveRuntimeValue(test.body, runtimeContext);
+ 
+     request.bodyType = bodyType;
+     request.body = encodeBody(resolvedBody, bodyType, request.headers);
+@@ -524,13 +531,13 @@
+   return params.toString();
+ }
+ 
+-function buildUrl(baseUrl, requestPath, query, runtimeData) {
++function buildUrl(baseUrl, requestPath, query) {
+   const url = new URL(requestPath, ensureTrailingSlash(baseUrl));
+ 
+   if (query && typeof query === 'object') {
+     for (const [key, value] of Object.entries(query)) {
+       if (value === undefined || value === null) continue;
+-      url.searchParams.set(key, String(resolveRuntimeTokens(value, runtimeData)));
++      url.searchParams.set(key, String(value));
+     }
+   }
+ 
+@@ -606,32 +613,27 @@
+   return resolveBuiltInTokens(clone(data));
+ }
+ 
+-function resolveValue(value, runtimeData) {
+-  if (typeof value === 'string' && value.startsWith('$data.')) {
+-    const key = value.slice('$data.'.length);
++function resolveRuntimeValue(value, context) {
++  if (typeof value === 'string') {
++    const injection = value.match(/^\$(data|capture)\.([A-Za-z0-9_.-]+)$/);
+ 
+-    if (Object.prototype.hasOwnProperty.call(runtimeData, key)) {
+-      return clone(runtimeData[key]);
+-    }
++    if (injection) {
++      const namespace = injection[1];
++      const referencePath = injection[2];
++      const source = context[namespace] || {};
++      const resolved = getByPath(source, referencePath);
+ 
+-    const resolved = getByPath(runtimeData, key);
++      if (!resolved.exists) {
++        throw new Error(`${referenceLabel(namespace)} reference not found: ${value}`);
++      }
+ 
+-    if (!resolved.exists) {
+-      throw new Error(`Data reference not found: ${value}`);
++      return clone(resolved.value);
+     }
+ 
+-    return clone(resolved.value);
+-  }
+-
+-  return clone(value);
+-}
+-
+-function resolveRuntimeTokens(value, runtimeData, runtimeCapture = {}) {
+-  if (typeof value === 'string') {
+     return value.replace(/\$\{([^}]+)\}/g, (_match, tokenName) => {
+       if (tokenName.startsWith('data.')) {
+         const dataPath = tokenName.slice('data.'.length);
+-        const resolved = getByPath(runtimeData, dataPath);
++        const resolved = getByPath(context.data || {}, dataPath);
+ 
+         if (!resolved.exists) {
+           throw new Error(`Data reference not found: ${tokenName}`);
+@@ -642,7 +644,7 @@
+ 
+       if (tokenName.startsWith('capture.')) {
+         const capturePath = tokenName.slice('capture.'.length);
+-        const resolved = getByPath(runtimeCapture, capturePath);
++        const resolved = getByPath(context.capture || {}, capturePath);
+ 
+         if (!resolved.exists) {
+           throw new Error(`Capture reference not found: ${tokenName}`);
+@@ -656,13 +658,13 @@
+   }
+ 
+   if (Array.isArray(value)) {
+-    return value.map((item) => resolveRuntimeTokens(item, runtimeData, runtimeCapture));
++    return value.map((item) => resolveRuntimeValue(item, context));
+   }
+ 
+   if (value && typeof value === 'object') {
+     const result = {};
+     for (const [key, child] of Object.entries(value)) {
+-      result[key] = resolveRuntimeTokens(child, runtimeData, runtimeCapture);
++      result[key] = resolveRuntimeValue(child, context);
+     }
+     return result;
+   }
+@@ -670,10 +672,14 @@
+   return value;
+ }
+ 
++function referenceLabel(namespace) {
++  return namespace === 'capture' ? 'Capture' : 'Data';
++}
++
+ function resolveBuiltInTokens(value) {
+   if (typeof value === 'string') {
+     return value.replace(/\$\{([^}]+)\}/g, (_match, tokenName) => {
+-      if (tokenName.startsWith('data.')) {
++      if (tokenName.startsWith('data.') || tokenName.startsWith('capture.')) {
+         return `\${${tokenName}}`;
+       }
+ 

@@ -1,0 +1,194 @@
+--- a/tram
++++ b/tram
+@@ -380,7 +380,7 @@
+   try {
+     const response = await executeRequest(request, manifest.config.timeoutMs);
+     const durationMs = Date.now() - started;
+-    const resolvedExpect = resolveRuntimeTokens(clone(test.expect), runtimeData, runtimeCapture);
++    const resolvedExpect = resolveRuntimeValue(test.expect, runtimeData, runtimeCapture);
+     const assertions = evaluateExpectations({ expect: resolvedExpect, response });
+     const expectationsPassed = assertions.every((assertion) => assertion.passed);
+     const captureAssertions = expectationsPassed
+@@ -455,14 +455,18 @@
+   const config = manifest.config || {};
+ 
+   const method = String(test.method || 'GET').toUpperCase();
+-  const headers = {
+-    ...(config.defaultHeaders || {}),
+-    ...(test.headers || {})
+-  };
+-
+-  const query = resolveRuntimeTokens(resolveValue(test.query, runtimeData), runtimeData, runtimeCapture);
+-  const requestPath = resolveRuntimeTokens(test.path, runtimeData, runtimeCapture);
+-  const url = buildUrl(config.baseUrl, requestPath, query, runtimeData);
++  const headers = resolveRuntimeValue(
++    {
++      ...(config.defaultHeaders || {}),
++      ...(test.headers || {})
++    },
++    runtimeData,
++    runtimeCapture
++  );
++
++  const query = resolveRuntimeValue(test.query, runtimeData, runtimeCapture);
++  const requestPath = resolveRuntimeValue(test.path, runtimeData, runtimeCapture);
++  const url = buildUrl(config.baseUrl, requestPath, query);
+ 
+   const request = {
+     method,
+@@ -475,7 +479,7 @@
+ 
+   if (Object.prototype.hasOwnProperty.call(test, 'body')) {
+     const bodyType = test.bodyType || 'json';
+-    const resolvedBody = resolveRuntimeTokens(resolveValue(test.body, runtimeData), runtimeData, runtimeCapture);
++    const resolvedBody = resolveRuntimeValue(test.body, runtimeData, runtimeCapture);
+ 
+     request.bodyType = bodyType;
+     request.body = encodeBody(resolvedBody, bodyType, request.headers);
+@@ -524,13 +528,13 @@
+   return params.toString();
+ }
+ 
+-function buildUrl(baseUrl, requestPath, query, runtimeData) {
++function buildUrl(baseUrl, requestPath, query) {
+   const url = new URL(requestPath, ensureTrailingSlash(baseUrl));
+ 
+   if (query && typeof query === 'object') {
+     for (const [key, value] of Object.entries(query)) {
+       if (value === undefined || value === null) continue;
+-      url.searchParams.set(key, String(resolveRuntimeTokens(value, runtimeData)));
++      url.searchParams.set(key, String(value));
+     }
+   }
+ 
+@@ -606,68 +610,84 @@
+   return resolveBuiltInTokens(clone(data));
+ }
+ 
+-function resolveValue(value, runtimeData) {
+-  if (typeof value === 'string' && value.startsWith('$data.')) {
+-    const key = value.slice('$data.'.length);
+-
+-    if (Object.prototype.hasOwnProperty.call(runtimeData, key)) {
+-      return clone(runtimeData[key]);
+-    }
+-
+-    const resolved = getByPath(runtimeData, key);
+-
+-    if (!resolved.exists) {
+-      throw new Error(`Data reference not found: ${value}`);
+-    }
+-
+-    return clone(resolved.value);
+-  }
+-
+-  return clone(value);
+-}
+-
+-function resolveRuntimeTokens(value, runtimeData, runtimeCapture = {}) {
++function resolveRuntimeValue(value, runtimeData, runtimeCapture = {}) {
+   if (typeof value === 'string') {
++    const injection = parseInjectionReference(value);
++
++    if (injection) {
++      return clone(resolveRuntimeReference(injection, runtimeData, runtimeCapture));
++    }
++
+     return value.replace(/\$\{([^}]+)\}/g, (_match, tokenName) => {
+-      if (tokenName.startsWith('data.')) {
+-        const dataPath = tokenName.slice('data.'.length);
+-        const resolved = getByPath(runtimeData, dataPath);
+-
+-        if (!resolved.exists) {
+-          throw new Error(`Data reference not found: ${tokenName}`);
+-        }
+-
+-        return String(resolved.value);
+-      }
+-
+-      if (tokenName.startsWith('capture.')) {
+-        const capturePath = tokenName.slice('capture.'.length);
+-        const resolved = getByPath(runtimeCapture, capturePath);
+-
+-        if (!resolved.exists) {
+-          throw new Error(`Capture reference not found: ${tokenName}`);
+-        }
+-
+-        return String(resolved.value);
+-      }
+-
+-      return generateToken(tokenName);
++      const resolved = resolveRuntimeInterpolation(tokenName, runtimeData, runtimeCapture);
++      return String(resolved);
+     });
+   }
+ 
+   if (Array.isArray(value)) {
+-    return value.map((item) => resolveRuntimeTokens(item, runtimeData, runtimeCapture));
++    return value.map((item) => resolveRuntimeValue(item, runtimeData, runtimeCapture));
+   }
+ 
+   if (value && typeof value === 'object') {
+     const result = {};
+     for (const [key, child] of Object.entries(value)) {
+-      result[key] = resolveRuntimeTokens(child, runtimeData, runtimeCapture);
++      result[key] = resolveRuntimeValue(child, runtimeData, runtimeCapture);
+     }
+     return result;
+   }
+ 
+   return value;
++}
++
++function parseInjectionReference(value) {
++  const match = value.match(/^\$(data|capture)\.([A-Za-z0-9_.-]+)$/);
++
++  if (!match) {
++    return null;
++  }
++
++  return {
++    namespace: match[1],
++    path: match[2],
++    source: value
++  };
++}
++
++function resolveRuntimeReference(reference, runtimeData, runtimeCapture) {
++  const source = reference.namespace === 'data'
++    ? runtimeData
++    : runtimeCapture;
++
++  const resolved = getByPath(source, reference.path);
++
++  if (!resolved.exists) {
++    const label = reference.namespace === 'data' ? 'Data' : 'Capture';
++    throw new Error(`${label} reference not found: ${reference.source}`);
++  }
++
++  return resolved.value;
++}
++
++function resolveRuntimeInterpolation(tokenName, runtimeData, runtimeCapture) {
++  if (tokenName.startsWith('data.')) {
++    const reference = {
++      namespace: 'data',
++      path: tokenName.slice('data.'.length),
++      source: tokenName
++    };
++    return resolveRuntimeReference(reference, runtimeData, runtimeCapture);
++  }
++
++  if (tokenName.startsWith('capture.')) {
++    const reference = {
++      namespace: 'capture',
++      path: tokenName.slice('capture.'.length),
++      source: tokenName
++    };
++    return resolveRuntimeReference(reference, runtimeData, runtimeCapture);
++  }
++
++  return generateToken(tokenName);
+ }
+ 
+ function resolveBuiltInTokens(value) {
