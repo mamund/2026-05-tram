@@ -386,15 +386,6 @@ Correct object injection:
 "body": "$data.createTask"
 ```
 
-Object injection may also be used inside assertions:
-
-```json
-{
-  "path": "$.type",
-  "anyOf": "$data.validTypes"
-}
-```
-
 Correct string interpolation:
 
 ```json
@@ -614,9 +605,6 @@ exists
 equals
 contains
 oneOf
-anyOf
-allOf
-noneOf
 type
 range
 isArray
@@ -749,9 +737,6 @@ Current supported usage includes:
 each.property.equals
 each.property.contains
 each.property.oneOf
-each.property.anyOf
-each.property.allOf
-each.property.noneOf
 each.property.type
 each.property.range
 nested eachProperty path assertions
@@ -819,7 +804,7 @@ Example:
 
 ## oneOf
 
-Checks that a scalar value matches one of several allowed values.
+Checks that a value matches one of several allowed values.
 
 Example:
 
@@ -828,60 +813,6 @@ Example:
   "path": "$.status",
   "oneOf": ["active", "pending", "completed"]
 }
-```
-
-Rules:
-
-```text
-oneOf applies to scalar values only
-```
-
----
-
-## anyOf
-
-Checks that an array contains at least one expected value.
-
-```json
-{
-  "path": "$.type",
-  "anyOf": ["Fire","Flying"]
-}
-```
-
----
-
-## allOf
-
-Checks that an array contains every expected value.
-
-```json
-{
-  "path": "$.type",
-  "allOf": ["Fire","Flying"]
-}
-```
-
----
-
-## noneOf
-
-Checks that an array contains none of the expected values.
-
-```json
-{
-  "path": "$.type",
-  "noneOf": ["Water","Electric"]
-}
-```
-
-Rules:
-
-```text
-anyOf applies only to arrays
-allOf applies only to arrays
-noneOf applies only to arrays
-array members are compared using deep equality
 ```
 
 ---
@@ -1239,18 +1170,6 @@ Example range assertion:
     "min": 1,
     "max": 5
   }
-}
-```
-
-Example array membership assertion:
-
-```json
-{
-  "path": "$.roles",
-  "allOf": [
-    "read",
-    "write"
-  ]
 }
 ```
 
