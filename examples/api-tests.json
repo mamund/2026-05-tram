@@ -139,7 +139,7 @@
           },
           {
             "path": "$",
-            "minLength": 1
+            "length" : {"min": 1}
           },
           {
             "path": "$",
@@ -259,6 +259,10 @@
               "optional": true,
               "type": "string"
             }
+          },
+          {
+            "path": "$.title",
+            "length": {"min":1,"max":120}
           },
           {
             "path": "$.status",
