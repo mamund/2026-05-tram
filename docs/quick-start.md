@@ -537,7 +537,8 @@ type
 range
 isArray
 hasProperties
-minLength
+length
+minLength (deprecated)
 each
 eachProperty
 ```

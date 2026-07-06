@@ -619,6 +619,7 @@ allOf
 noneOf
 type
 range
+length
 isArray
 hasProperties
 minLength
@@ -754,6 +755,8 @@ each.property.allOf
 each.property.noneOf
 each.property.type
 each.property.range
+each.property.length
+each.property.minLength
 nested eachProperty path assertions
 ```
 
@@ -992,16 +995,86 @@ Example:
 
 ---
 
+## length
+
+Checks exact, minimum, maximum, or bounded array/string length.
+
+Exact length example:
+
+```json
+{
+  "path": "$.items",
+  "length": 3
+}
+```
+
+Minimum length example:
+
+```json
+{
+  "path": "$.items",
+  "length": {
+    "min": 1
+  }
+}
+```
+
+Maximum length example:
+
+```json
+{
+  "path": "$.title",
+  "length": {
+    "max": 120
+  }
+}
+```
+
+Bounded length example:
+
+```json
+{
+  "path": "$.title",
+  "length": {
+    "min": 3,
+    "max": 120
+  }
+}
+```
+
+Rules:
+
+```text
+length applies only to arrays and strings
+numeric length values check exact length
+object length values support optional min and max
+bounds are inclusive
+objects, numbers, booleans, and null fail the assertion
+```
+
+---
+
 ## minLength
 
-Checks minimum array/string length.
+Deprecated. Use `length` with `min` instead.
 
-Example:
+Current form:
 
 ```json
 {
   "path": "$",
   "minLength": 1
+}
+```
+
+Preferred form:
+
+```json
+{
+  "path": "$",
+  "length": {
+    "min": 1
+  }
 }
 ```
 
@@ -1083,6 +1156,37 @@ Example:
     "range": {
       "min": 1,
       "max": 5
+    }
+  }
+}
+```
+
+### each.property.length
+
+Applies length assertions to a string or array property on each array item.
+
+Example:
+
+```json
+{
+  "path": "$",
+  "each": {
+    "property": "code",
+    "length": 2
+  }
+}
+```
+
+Bounded length example:
+
+```json
+{
+  "path": "$",
+  "each": {
+    "property": "title",
+    "length": {
+      "min": 3,
+      "max": 120
     }
   }
 }
@@ -1238,6 +1342,18 @@ Example range assertion:
   "range": {
     "min": 1,
     "max": 5
+  }
+}
+```
+
+Example length assertion:
+
+```json
+{
+  "path": "$.title",
+  "length": {
+    "min": 3,
+    "max": 120
   }
 }
 ```
