@@ -1,0 +1,135 @@
+--- assertions.js
++++ assertions.js
+@@ -293,6 +293,16 @@ function assertJson(assertion, body, basePath = '$', options = {}) {
+     });
+   }
+ 
++  if (isLengthAssertion(assertion.length)) {
++    results.push(assertLength({
++      actual: value.value,
++      expected: normalizeLength(assertion.length),
++      exists: value.exists,
++      path: absolutePath,
++      type: 'length'
++    }));
++  }
++
+   if (assertion.each) {
+     const actual = value.value;
+ 
+@@ -470,6 +480,16 @@ function assertEach(eachAssertion, item, itemPath) {
+         type: 'each.property.range'
+       }));
+     }
++
++    if (isLengthAssertion(eachAssertion.length)) {
++      results.push(assertLength({
++        actual,
++        expected: normalizeLength(eachAssertion.length),
++        exists,
++        path: propertyPath,
++        type: 'each.property.length'
++      }));
++    }
+   }
+ 
+   if (eachAssertion.path) {
+@@ -562,6 +582,98 @@ function rangeFailureMessage({ actual, expected, exists, isNumber, path }) {
+   return `Expected ${path} to be ${rangeDescription(expected)}, got ${formatValue(actual)}.`;
+ }
+ 
++function assertLength({ actual, expected, exists, path, type }) {
++  const hasLength = typeof actual === 'string' || Array.isArray(actual);
++  const actualLength = hasLength ? actual.length : undefined;
++  const hasMin = Object.prototype.hasOwnProperty.call(expected, 'min');
++  const hasMax = Object.prototype.hasOwnProperty.call(expected, 'max');
++
++  let passed = exists && hasLength;
++
++  if (passed && hasMin) {
++    passed = actualLength >= expected.min;
++  }
++
++  if (passed && hasMax) {
++    passed = actualLength <= expected.max;
++  }
++
++  return {
++    passed,
++    type,
++    target: 'json',
++    path,
++    expected,
++    actual: actualLength,
++    message: passed
++      ? `${path} length is ${lengthDescription(expected)}.`
++      : lengthFailureMessage({ actual, actualLength, expected, exists, hasLength, path })
++  };
++}
++
++function isLengthAssertion(length) {
++  if (typeof length === 'number') {
++    return Number.isInteger(length) && length >= 0;
++  }
++
++  return length && typeof length === 'object' && !Array.isArray(length)
++    && (Object.prototype.hasOwnProperty.call(length, 'min')
++      || Object.prototype.hasOwnProperty.call(length, 'max'));
++}
++
++function normalizeLength(length) {
++  if (typeof length === 'number') {
++    return { min: length, max: length };
++  }
++
++  const normalized = {};
++
++  if (Object.prototype.hasOwnProperty.call(length, 'min')) {
++    normalized.min = length.min;
++  }
++
++  if (Object.prototype.hasOwnProperty.call(length, 'max')) {
++    normalized.max = length.max;
++  }
++
++  return normalized;
++}
++
++function lengthDescription(length) {
++  const hasMin = Object.prototype.hasOwnProperty.call(length, 'min');
++  const hasMax = Object.prototype.hasOwnProperty.call(length, 'max');
++
++  if (hasMin && hasMax && length.min === length.max) {
++    return `exactly ${length.min}`;
++  }
++
++  if (hasMin && hasMax) {
++    return `between ${length.min} and ${length.max}`;
++  }
++
++  if (hasMin) {
++    return `at least ${length.min}`;
++  }
++
++  if (hasMax) {
++    return `at most ${length.max}`;
++  }
++
++  return 'within length bounds';
++}
++
++function lengthFailureMessage({ actual, actualLength, expected, exists, hasLength, path }) {
++  if (!exists) {
++    return `Expected ${path} length to be ${lengthDescription(expected)}, but the path does not exist.`;
++  }
++
++  if (!hasLength) {
++    return `Expected ${path} to be an array or string with length ${lengthDescription(expected)}, got ${formatValue(actual)}.`;
++  }
++
++  return `Expected ${path} length to be ${lengthDescription(expected)}, got ${actualLength}.`;
++}
++
+ function assertType({ actual, expected, exists, path, type }) {
+   const actualType = getValueType(actual);
+   const supported = isSupportedType(expected);
