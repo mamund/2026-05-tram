@@ -1,0 +1,487 @@
+{
+  "name": "Task Management API Tests",
+  "manifestVersion": "0.1",
+  "version": "1.0.0",
+  "description": "Behavioral tests for the sample task-management API.",
+  "author": "Mike Amundsen",
+  "created": "2026-05-16",
+  "updated": "2026-05-16",
+  "tags": [
+    "tasks",
+    "http",
+    "behavioral-testing",
+    "nodejs"
+  ],
+  "config": {
+    "baseUrl": "http://localhost:3000",
+    "timeoutMs": 5000,
+    "defaultHeaders": {
+      "accept": "application/json"
+    }
+  },
+  "data": {
+    "stable": {
+      "id": "${randomId}",
+      "guid": "c3e59224-93d5-4b07-9317-6dc24eb586b3"
+    },
+    "task.valid": {
+      "task": {
+        "id": "${randomId}",
+        "title": "Buy milk",
+        "status": "active",
+        "priority": 3,
+        "assignedUser": "alice"
+      }
+    },
+    "task.invalidStatus": {
+      "task" : {
+        "id": "missing-status",
+        "title": "missing-status",
+        "priority": 1,
+        "assignedUser": "alice"
+      }  
+    },
+    "task.missingTitle": {
+      "task": {
+        "id": "missing-title",
+        "priority": 2,
+        "assignedUser": "alice"
+      }
+    },
+    "task.updateStatus": {
+      "task" : {
+        "id": "${data.stable.guid}",
+        "status": "completed"
+      }
+    },
+    "filters.active": {
+      "status": "active"
+    },
+    "filters.completed": {
+      "status": "completed"
+    }
+  },
+  "tests": [
+    {
+      "id": "root-get",
+      "name": "Get API root",
+      "tags": [
+        "root",
+        "happy-path"
+      ],
+      "method": "GET",
+      "path": "/",
+      "expect": {
+        "status": 200,
+        "headers": [
+          {
+            "name": "content-type",
+            "contains": "application/json"
+          }
+        ],
+        "body": [
+          {
+            "path": "$._links",
+            "exists": true
+          },
+          {
+            "path": "$._links",
+            "hasProperties": [
+              "taskList"
+            ]
+          },
+          {
+            "path": "$._links",
+            "eachProperty": {
+              "hasProperties": ["href", "method"]
+            }
+          },
+          {
+            "path": "$._links",
+            "eachProperty": {
+              "path": "$.method",
+              "oneOf": ["GET", "POST", "PUT", "DELETE"]
+            }
+          },
+          {
+            "path": "$._links",
+            "eachProperty": {
+              "path": "$.title",
+              "optional": true,
+              "type": "string"
+            }
+          }          
+        ]
+      }
+    },
+    {
+      "id": "tasks-list",
+      "name": "List tasks",
+      "tags": [
+        "tasks",
+        "collection",
+        "happy-path"
+      ],
+      "method": "GET",
+      "path": "/tasks",
+      "expect": {
+        "status": 200,
+        "headers": [
+          {
+            "name": "content-type",
+            "contains": "application/json"
+          }
+        ],
+        "body": [
+          {
+            "path": "$",
+            "isArray": true
+          },
+          {
+            "path": "$",
+            "length" : {"min": 1}
+          },
+          {
+            "path": "$",
+            "each": {
+              "hasProperties": [
+                "id",
+                "title",
+                "status",
+                "priority",
+                "assignedUser",
+                "_links"
+              ]
+            }
+          },
+          {
+            "path": "$",
+            "each": {
+              "path": "$._links",
+              "eachProperty": {
+                "hasProperties": ["href", "method"]
+              }
+            }
+          },
+          {
+            "path": "$",
+            "each": {
+              "path": "$._links",
+              "eachProperty": {
+                "path": "$.method",
+                "oneOf": ["GET", "POST", "PUT", "PATCH", "DELETE"]
+              }
+            }
+          },     
+          {
+            "path": "$",
+            "each": {
+              "property": "priority",
+              "type": "number"
+            }
+          },  
+          {
+            "path": "$",
+            "each": {
+              "property": "description",
+              "optional": true,
+              "type": "string"
+            }
+          },          
+          {
+            "path": "$",
+            "each": {
+              "property": "status",
+              "oneOf": [
+                "active",
+                "pending",
+                "completed"
+              ]
+            }
+          },
+          {
+            "path": "$",
+            "each": {
+              "property": "priority",
+              "range": {"min":1,"max":5}
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "task-get-single",
+      "name": "Get single task",
+      "tags": [
+        "tasks",
+        "item",
+        "happy-path"
+      ],
+      "method": "GET",
+      "path": "/tasks/${data.stable.guid}",
+      "expect": {
+        "status": 200,
+        "body": [
+          {
+            "path": "$.id",
+            "equals": "${data.stable.guid}"
+          },
+          {
+            "path": "$",
+            "hasProperties": [
+              "id",
+              "title",
+              "status",
+              "priority",
+              "assignedUser",
+              "_links"
+            ]
+          },
+                    {
+            "path": "$._links",
+            "eachProperty": {
+              "path": "$.href",
+              "type": "string"
+            }
+          },
+          {
+            "path": "$.id",
+            "type": "string"
+          },
+          {
+            "path": "$.priority",
+            "type": "number"
+          },
+          {
+            "path": "$._links",
+            "eachProperty": {
+              "path": "$.title",
+              "optional": true,
+              "type": "string"
+            }
+          },
+          {
+            "path": "$.title",
+            "length": {"min":1,"max":120}
+          },
+          {
+            "path": "$.status",
+            "oneOf": [
+              "active",
+              "pending",
+              "completed"
+            ]
+          },
+          {
+            "path": "$.priority",
+            "range": {"min":1,"max":5}
+          }
+        ]
+      }
+    },
+    {
+      "id": "task-get-missing",
+      "name": "Reject unknown task lookup",
+      "tags": [
+        "tasks",
+        "sad-path",
+        "lookup"
+      ],
+      "type": "sad-path",
+      "method": "GET",
+      "path": "/tasks/${data.stable.id}",
+      "expect": {
+        "status": 404,
+        "body": [
+          {
+            "path": "$.error",
+            "contains": "not found"
+          }
+        ]
+      }
+    },
+    {
+      "id": "task-create-valid",
+      "name": "Create task",
+      "tags": [
+        "tasks",
+        "create",
+        "happy-path"
+      ],
+      "method": "POST",
+      "path": "/tasks",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "bodyType": "json",
+      "body": "$data.task.valid",
+      "expect": {
+        "status": 201,
+        "headers": [
+          {
+            "name": "content-type",
+            "contains": "application/json"
+          }
+        ],        
+        "body": [
+          {
+            "path": "$",
+            "hasProperties": [
+              "id",
+              "title",
+              "status",
+              "priority",
+              "assignedUser",
+              "_links"
+            ]
+          },
+          {
+            "path": "$.status",
+            "equals": "active"
+          },
+          {
+            "path": "$.title",
+            "contains": "Buy milk"
+          }
+        ]
+      }
+    },
+    {
+      "id": "task-create-missing-title",
+      "name": "Reject task creation without title",
+      "tags": [
+        "tasks",
+        "create",
+        "sad-path",
+        "validation"
+      ],
+      "type": "sad-path",
+      "method": "POST",
+      "path": "/tasks",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": "$data.task.missingTitle",
+      "expect": {
+        "status": 400,
+        "body": [
+          {
+            "path": "$.error",
+            "contains": "title"
+          }
+        ]
+      }
+    },
+    {
+      "id": "task-create-invalid-status",
+      "name": "Reject invalid task status",
+      "tags": [
+        "tasks",
+        "create",
+        "sad-path",
+        "validation"
+      ],
+      "type": "sad-path",
+      "method": "POST",
+      "path": "/tasks",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": "$data.task.invalidStatus",
+      "expect": {
+        "status": 400,
+        "body": [
+          {
+            "path": "$.error",
+            "contains": "status"
+          }
+        ]
+      }
+    },
+    {
+      "id": "task-update-status",
+      "name": "Update task status",
+      "tags": [
+        "tasks",
+        "update",
+        "happy-path"
+      ],
+      "method": "PUT",
+      "path": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/status",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": "$data.task.updateStatus",
+      "expect": {
+        "status": 200,
+        "body": [
+          {
+            "path": "$.id",
+            "equals": "c3e59224-93d5-4b07-9317-6dc24eb586b3"
+          },
+          {
+            "path": "$.status",
+            "equals": "completed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "task-filter-active",
+      "name": "Filter tasks by active status",
+      "tags": [
+        "tasks",
+        "filter",
+        "happy-path"
+      ],
+      "method": "GET",
+      "path": "/tasks",
+      "query": "$data.filters.active",
+      "expect": {
+        "status": 200,
+        "body": [
+          {
+            "path": "$",
+            "isArray": true
+          },
+          {
+            "path": "$",
+            "each": {
+              "property": "status",
+              "equals": "active"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "task-filter-completed",
+      "name": "Filter tasks by completed status",
+      "tags": [
+        "tasks",
+        "filter",
+        "happy-path"
+      ],
+      "method": "GET",
+      "path": "/tasks",
+      "query": "$data.filters.completed",
+      "expect": {
+        "status": 200,
+        "body": [
+          {
+            "path": "$",
+            "isArray": true
+          },
+          {
+            "path": "$",
+            "each": {
+              "property": "status",
+              "equals": "completed"
+            }
+          }
+        ]
+      }
+    }    
+  ]
+}
+

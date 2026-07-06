@@ -1,0 +1,203 @@
+{
+  "name": "TRAM manifest for testing Pokemon API!",
+  "manifestVersion" : "0.2",
+  "config": {
+    "baseUrl": "http://localhost:3000"
+  },
+  "data": {
+    "charizard": {"id": "006", "name": "Charizard", "type": ["Fire", "Flying"], "hp": 78},
+    "validTypes": [
+      "Normal", "Fire", "Water", "Electric", "Grass", "Ice",
+      "Fighting", "Poison", "Ground", "Flying", "Psychic",
+      "Bug", "Rock", "Ghost", "Dragon", "Dark", "Steel", "Fairy"
+    ]
+  },
+  "tests": [
+    {
+      "name": "Root GET, I expected 'exists false' to be possible and I think it is not",
+      "enabled" : true,
+      "method": "GET",
+      "path": "/",
+      "expect": {
+        "status": 200,
+        "headers": [
+          {
+            "name": "content-type",
+            "contains": "application/json"
+          }
+        ],
+        "body": [
+          {
+            "path": "$._links",
+            "exists": true
+          },
+          {
+            "path": "$._phoneNumbers",
+            "exists": false
+          },
+          {
+            "path": "$._links",
+            "hasProperties": [
+              "list"
+            ]
+          },
+          {
+            "path": "$._links",
+            "eachProperty": {
+              "hasProperties": ["href", "method"]
+            }
+          },
+          {
+            "path": "$._links",
+            "eachProperty": {
+              "path": "$.method",
+              "oneOf": ["GET", "POST", "PUT", "DELETE"]
+            }
+          },
+          {
+            "path": "$._links",
+            "eachProperty": {
+              "path": "$.title",
+              "optional": true,
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Get Pikachu - there's two 'equals' assertions here, only the first one passes, even though logically they are the same assertion.  The order of the keys differs. FEATURE",
+      "method": "GET",
+      "path": "/pokemon/025",
+      "enabled" : true,
+      "expect": {
+        "status": 200,
+        "body": [
+          {
+            "path": "$",
+            "equals": {
+                "id": "025",
+                "name": "Pikachu",
+                "type": [
+                  "Electric"
+                ],
+                "hp": 35
+              }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Add a pokemon Charizard",
+      "enabled" : true,
+      "method": "POST",
+      "path": "/pokemon",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": "$data.charizard",
+      "expect": {
+        "status": 201,
+        "headers": [
+          {
+            "name": "content-type",
+            "contains": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Fail when attempting to add Charizard a second time",
+      "enabled" : true,
+      "method": "POST",
+      "path": "/pokemon",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": "$data.charizard",
+      "expect": {
+        "status": 409,
+        "headers": [
+          {
+            "name": "content-type",
+            "contains": "application/json"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GET Charizard, I think the 'expect body equals $data.charizard' to pass and it's not, the test runner looks like it's not interpolating my $data variable",
+      "enabled" : true,
+      "method": "GET",
+      "path": "/pokemon/006",
+      "expect": {
+        "status": 200,
+        "body": [
+          {
+            "path": "$",
+            "equals": "$data.charizard"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GET Charizard, this passes, but I believe I am using object injection correctly in the previous test so I think that may be a bug",
+      "enabled" : true,
+      "method": "GET",
+      "path": "/pokemon/006",
+      "expect": {
+        "status": 200,
+        "body": [
+          {
+            "path": "$",
+            "equals": {"id": "006", "name": "Charizard", "type": ["Fire", "Flying"], "hp": 78}
+          },
+          {
+            "path": "$",
+            "equals": "$data.charizard"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GET Charizard w/ hasProperties, exists, type, anyOf, equals",
+      "enabled" : true,
+      "method": "GET",
+      "path": "/pokemon/006",
+      "expect": {
+        "status": 200,
+        "body": [
+          {
+            "path": "$",
+            "hasProperties": ["id","name","type","hp"]
+          },
+          { "path": "$.id", "exists": true},
+          { "path": "$.id", "type": "string"},
+          { "path": "$.id", "equals":"006"},
+          
+          { "path": "$.name", "exists": true},
+          { "path": "$.name", "type": "string"},
+          { "path": "$.name", "equals":"Charizard"},
+          
+          { "path": "$.type", "exists": true},
+          { "path": "$.type","type": "array"},
+          { "path": "$.type", "anyOf": "$data.validTypes"},
+          { "path": "$.type", "equals": ["Fire", "Flying"]},
+
+          { "path": "$.type", "length" : 2},
+          { "path": "$.type", "length" : {"min": 1}},
+          { "path": "$.type", "length" : {"max": 2}},
+          
+          
+          { "path": "$.hp", "exists": true},
+          { "path": "$.hp", "type": "number"},
+          { "path": "$.hp", "equals": 78},
+          
+          { "path": "$.notThere", "exists": false}
+          
+        ]
+      }
+    }
+
+  ]
+}
