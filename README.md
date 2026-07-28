@@ -6,10 +6,6 @@
 <tr>
 <td valign="top">
 
-<!--
-TRAM models API behavior as executable assertions that produce evidence. Its goal is to verify that observable system behavior continues to align with intended operational outcomes. 
--->
-
 Rather than focusing on implementation details, TRAM focuses on what can be observed at the API surface: the resources, actions, workflows, and rules that define how a system behaves. Assertions are organized into progressively richer layers, moving from endpoint availability and response structure to business behavior, workflows, and governance constraints. This allows teams to express operational intent as a durable behavioral model that remains valuable even as implementations evolve. 
 
 </td>
@@ -260,46 +256,6 @@ that define both a target URL and an HTTP method.
 ```
 
 TRAM supports partial and evolving representations while preserving explicit behavioral validation.
-
-
-<!--
-Assertions become directly inspectable operational statements.
-
-Simple behavioral assertion:
-
-```json
-{
-  "path": "$.status",
-  "equals": "active"
-}
-```
-
-Optional property assertion for evolving representations:
-
-```json
-{
-  "path": "$",
-  "each": {
-    "property": "description",
-    "optional": true,
-    "type": "string"
-  }
-}
-```
-
-Hypermedia affordance assertion:
-
-```json
-{
-  "path": "$._links",
-  "eachProperty": {
-    "hasProperties": ["href", "method"]
-  }
-}
-```
-
-TRAM supports partial and evolving representations while preserving explicit behavioral validation.
--->
 
 ---
 
@@ -948,13 +904,11 @@ Current releases avoid:
 
 The current emphasis is:
 
-```text
-clarity
-predictability
-behavior visibility
-manifest ergonomics
-reviewability
-```
+* clarity
+* predictability
+* behavior visibility
+* manifest ergonomics
+* reviewability
 
 ---
 

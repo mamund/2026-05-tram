@@ -14,7 +14,7 @@
   },
   "tests": [
     {
-      "name": "Root GET, I expected 'exists false' to be possible and I think it is not",
+      "name": "Root GET",
       "enabled" : true,
       "method": "GET",
       "path": "/",
@@ -66,7 +66,7 @@
       }
     },
     {
-      "name": "Get Pikachu - there's two 'equals' assertions here, only the first one passes, even though logically they are the same assertion.  The order of the keys differs. FEATURE",
+      "name": "Get Pikachu - The order of the keys in the assertion differs. FEATURE",
       "method": "GET",
       "path": "/pokemon/025",
       "enabled" : true,
@@ -126,7 +126,7 @@
       }
     },
     {
-      "name": "GET Charizard, I think the 'expect body equals $data.charizard' to pass and it's not, the test runner looks like it's not interpolating my $data variable",
+      "name": "GET Charizard using data reference",
       "enabled" : true,
       "method": "GET",
       "path": "/pokemon/006",
@@ -141,7 +141,7 @@
       }
     },
     {
-      "name": "GET Charizard, this passes, but I believe I am using object injection correctly in the previous test so I think that may be a bug",
+      "name": "GET Charizard with inline data",
       "enabled" : true,
       "method": "GET",
       "path": "/pokemon/006",
