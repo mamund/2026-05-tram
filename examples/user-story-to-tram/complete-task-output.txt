@@ -1,0 +1,21 @@
+Complete Task Behavior
+
+✓ Task initially exists and is active
+  GET /tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3
+  Status: 200
+  ✓ Status is 200.
+  ✓ $.id equals "c3e59224-93d5-4b07-9317-6dc24eb586b3".
+  ✓ $.status equals "active".
+✓ Mark task completed
+  PUT /tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/status
+  Status: 200
+  ✓ Status is 200.
+  ✓ $.id equals "c3e59224-93d5-4b07-9317-6dc24eb586b3".
+  ✓ $.status equals "completed".
+✓ Completed state persists
+  GET /tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3
+  Status: 200
+  ✓ Status is 200.
+  ✓ $.status equals "completed".
+
+Summary: 3 passed, 0 failed, 0 skipped, 3 total

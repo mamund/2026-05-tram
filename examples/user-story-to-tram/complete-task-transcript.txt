@@ -1,0 +1,276 @@
+TRAM HTTP Transcript
+Suite: Complete Task Behavior
+Generated: 2026-09-04T22:17:49.796Z
+
+============================================================
+Task initially exists and is active (complete-task-initial-state)
+
+> GET /tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3 HTTP/1.1
+> Host: localhost:3000
+> accept: application/json
+
+< HTTP/1.1 200
+< connection: keep-alive
+< content-length: 1010
+< content-type: application/json; charset=utf-8
+< date: Fri, 04 Sep 2026 22:17:49 GMT
+< etag: W/"3f2-QN1xjmBDGmZ61SwdJZ1YDEe2dvk"
+< keep-alive: timeout=5
+< x-powered-by: Express
+<
+< {
+<   "id": "c3e59224-93d5-4b07-9317-6dc24eb586b3",
+<   "title": "Third Task",
+<   "description": "Another example task",
+<   "dueDate": "2025-06-15",
+<   "status": "active",
+<   "priority": 5,
+<   "assignedUser": "bob",
+<   "_links": {
+<     "self": {
+<       "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3",
+<       "method": "GET"
+<     },
+<     "edit": {
+<       "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/edit",
+<       "method": "POST",
+<       "args": [
+<         "id",
+<         "title",
+<         "description",
+<         "dueDate",
+<         "status",
+<         "priority",
+<         "assignedUser"
+<       ]
+<     },
+<     "updateStatus": {
+<       "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/status",
+<       "method": "PUT",
+<       "args": [
+<         "id",
+<         "status"
+<       ]
+<     },
+<     "assignUser": {
+<       "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/assignee",
+<       "method": "PUT",
+<       "args": [
+<         "id",
+<         "assignedUser"
+<       ]
+<     },
+<     "setDueDate": {
+<       "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/due-date",
+<       "method": "PUT",
+<       "args": [
+<         "id",
+<         "dueDate"
+<       ]
+<     },
+<     "goHome": {
+<       "href": "/",
+<       "method": "GET"
+<     },
+<     "goTaskList": {
+<       "href": "/tasks",
+<       "method": "GET"
+<     },
+<     "goFilteredTasks": {
+<       "href": "/tasks?status=&priority=&assignedUser=",
+<       "method": "GET",
+<       "args": [
+<         "title",
+<         "dueDate",
+<         "status",
+<         "priority",
+<         "assignedUser"
+<       ]
+<     }
+<   }
+< }
+
+============================================================
+Mark task completed (complete-task-change-status)
+
+> PUT /tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/status HTTP/1.1
+> Host: localhost:3000
+> accept: application/json
+> content-type: application/json
+>
+> {
+>   "task": {
+>     "id": "c3e59224-93d5-4b07-9317-6dc24eb586b3",
+>     "status": "completed"
+>   }
+> }
+
+< HTTP/1.1 200
+< connection: keep-alive
+< content-length: 1013
+< content-type: application/json; charset=utf-8
+< date: Fri, 04 Sep 2026 22:17:49 GMT
+< etag: W/"3f5-TI+M+ubLo41IfPvUbOQrtA7sGAs"
+< keep-alive: timeout=5
+< x-powered-by: Express
+<
+< {
+<   "id": "c3e59224-93d5-4b07-9317-6dc24eb586b3",
+<   "title": "Third Task",
+<   "description": "Another example task",
+<   "dueDate": "2025-06-15",
+<   "status": "completed",
+<   "priority": 5,
+<   "assignedUser": "bob",
+<   "_links": {
+<     "self": {
+<       "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3",
+<       "method": "GET"
+<     },
+<     "edit": {
+<       "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/edit",
+<       "method": "POST",
+<       "args": [
+<         "id",
+<         "title",
+<         "description",
+<         "dueDate",
+<         "status",
+<         "priority",
+<         "assignedUser"
+<       ]
+<     },
+<     "updateStatus": {
+<       "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/status",
+<       "method": "PUT",
+<       "args": [
+<         "id",
+<         "status"
+<       ]
+<     },
+<     "assignUser": {
+<       "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/assignee",
+<       "method": "PUT",
+<       "args": [
+<         "id",
+<         "assignedUser"
+<       ]
+<     },
+<     "setDueDate": {
+<       "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/due-date",
+<       "method": "PUT",
+<       "args": [
+<         "id",
+<         "dueDate"
+<       ]
+<     },
+<     "goHome": {
+<       "href": "/",
+<       "method": "GET"
+<     },
+<     "goTaskList": {
+<       "href": "/tasks",
+<       "method": "GET"
+<     },
+<     "goFilteredTasks": {
+<       "href": "/tasks?status=&priority=&assignedUser=",
+<       "method": "GET",
+<       "args": [
+<         "title",
+<         "dueDate",
+<         "status",
+<         "priority",
+<         "assignedUser"
+<       ]
+<     }
+<   }
+< }
+
+============================================================
+Completed state persists (complete-task-resulting-state)
+
+> GET /tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3 HTTP/1.1
+> Host: localhost:3000
+> accept: application/json
+
+< HTTP/1.1 200
+< connection: keep-alive
+< content-length: 1013
+< content-type: application/json; charset=utf-8
+< date: Fri, 04 Sep 2026 22:17:49 GMT
+< etag: W/"3f5-TI+M+ubLo41IfPvUbOQrtA7sGAs"
+< keep-alive: timeout=5
+< x-powered-by: Express
+<
+< {
+<   "id": "c3e59224-93d5-4b07-9317-6dc24eb586b3",
+<   "title": "Third Task",
+<   "description": "Another example task",
+<   "dueDate": "2025-06-15",
+<   "status": "completed",
+<   "priority": 5,
+<   "assignedUser": "bob",
+<   "_links": {
+<     "self": {
+<       "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3",
+<       "method": "GET"
+<     },
+<     "edit": {
+<       "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/edit",
+<       "method": "POST",
+<       "args": [
+<         "id",
+<         "title",
+<         "description",
+<         "dueDate",
+<         "status",
+<         "priority",
+<         "assignedUser"
+<       ]
+<     },
+<     "updateStatus": {
+<       "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/status",
+<       "method": "PUT",
+<       "args": [
+<         "id",
+<         "status"
+<       ]
+<     },
+<     "assignUser": {
+<       "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/assignee",
+<       "method": "PUT",
+<       "args": [
+<         "id",
+<         "assignedUser"
+<       ]
+<     },
+<     "setDueDate": {
+<       "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/due-date",
+<       "method": "PUT",
+<       "args": [
+<         "id",
+<         "dueDate"
+<       ]
+<     },
+<     "goHome": {
+<       "href": "/",
+<       "method": "GET"
+<     },
+<     "goTaskList": {
+<       "href": "/tasks",
+<       "method": "GET"
+<     },
+<     "goFilteredTasks": {
+<       "href": "/tasks?status=&priority=&assignedUser=",
+<       "method": "GET",
+<       "args": [
+<         "title",
+<         "dueDate",
+<         "status",
+<         "priority",
+<         "assignedUser"
+<       ]
+<     }
+<   }
+< }
+

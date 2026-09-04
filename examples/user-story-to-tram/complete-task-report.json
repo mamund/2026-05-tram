@@ -1,0 +1,423 @@
+{
+  "name": "Complete Task Behavior",
+  "manifestVersion": "0.2",
+  "version": "1.0.0",
+  "description": null,
+  "author": null,
+  "created": null,
+  "updated": null,
+  "tags": [],
+  "summary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0
+  },
+  "results": [
+    {
+      "id": "complete-task-initial-state",
+      "name": "Task initially exists and is active",
+      "enabled": true,
+      "skipped": false,
+      "passed": true,
+      "type": null,
+      "tags": [],
+      "rationale": null,
+      "method": "GET",
+      "path": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3",
+      "url": "http://localhost:3000/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3",
+      "status": 200,
+      "durationMs": 70,
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:3000/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3",
+        "headers": {
+          "accept": "application/json"
+        },
+        "bodyType": null,
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "connection": "keep-alive",
+          "content-length": "1010",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 04 Sep 2026 22:18:12 GMT",
+          "etag": "W/\"3f2-QN1xjmBDGmZ61SwdJZ1YDEe2dvk\"",
+          "keep-alive": "timeout=5",
+          "x-powered-by": "Express"
+        },
+        "body": {
+          "id": "c3e59224-93d5-4b07-9317-6dc24eb586b3",
+          "title": "Third Task",
+          "description": "Another example task",
+          "dueDate": "2025-06-15",
+          "status": "active",
+          "priority": 5,
+          "assignedUser": "bob",
+          "_links": {
+            "self": {
+              "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3",
+              "method": "GET"
+            },
+            "edit": {
+              "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/edit",
+              "method": "POST",
+              "args": [
+                "id",
+                "title",
+                "description",
+                "dueDate",
+                "status",
+                "priority",
+                "assignedUser"
+              ]
+            },
+            "updateStatus": {
+              "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/status",
+              "method": "PUT",
+              "args": [
+                "id",
+                "status"
+              ]
+            },
+            "assignUser": {
+              "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/assignee",
+              "method": "PUT",
+              "args": [
+                "id",
+                "assignedUser"
+              ]
+            },
+            "setDueDate": {
+              "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/due-date",
+              "method": "PUT",
+              "args": [
+                "id",
+                "dueDate"
+              ]
+            },
+            "goHome": {
+              "href": "/",
+              "method": "GET"
+            },
+            "goTaskList": {
+              "href": "/tasks",
+              "method": "GET"
+            },
+            "goFilteredTasks": {
+              "href": "/tasks?status=&priority=&assignedUser=",
+              "method": "GET",
+              "args": [
+                "title",
+                "dueDate",
+                "status",
+                "priority",
+                "assignedUser"
+              ]
+            }
+          }
+        },
+        "rawBody": "{\"id\":\"c3e59224-93d5-4b07-9317-6dc24eb586b3\",\"title\":\"Third Task\",\"description\":\"Another example task\",\"dueDate\":\"2025-06-15\",\"status\":\"active\",\"priority\":5,\"assignedUser\":\"bob\",\"_links\":{\"self\":{\"href\":\"/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3\",\"method\":\"GET\"},\"edit\":{\"href\":\"/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/edit\",\"method\":\"POST\",\"args\":[\"id\",\"title\",\"description\",\"dueDate\",\"status\",\"priority\",\"assignedUser\"]},\"updateStatus\":{\"href\":\"/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/status\",\"method\":\"PUT\",\"args\":[\"id\",\"status\"]},\"assignUser\":{\"href\":\"/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/assignee\",\"method\":\"PUT\",\"args\":[\"id\",\"assignedUser\"]},\"setDueDate\":{\"href\":\"/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/due-date\",\"method\":\"PUT\",\"args\":[\"id\",\"dueDate\"]},\"goHome\":{\"href\":\"/\",\"method\":\"GET\"},\"goTaskList\":{\"href\":\"/tasks\",\"method\":\"GET\"},\"goFilteredTasks\":{\"href\":\"/tasks?status=&priority=&assignedUser=\",\"method\":\"GET\",\"args\":[\"title\",\"dueDate\",\"status\",\"priority\",\"assignedUser\"]}}}"
+      },
+      "assertions": [
+        {
+          "passed": true,
+          "type": "status",
+          "target": "http",
+          "expected": 200,
+          "actual": 200,
+          "message": "Status is 200."
+        },
+        {
+          "passed": true,
+          "type": "equals",
+          "target": "json",
+          "path": "$.id",
+          "expected": "c3e59224-93d5-4b07-9317-6dc24eb586b3",
+          "actual": "c3e59224-93d5-4b07-9317-6dc24eb586b3",
+          "message": "$.id equals \"c3e59224-93d5-4b07-9317-6dc24eb586b3\"."
+        },
+        {
+          "passed": true,
+          "type": "equals",
+          "target": "json",
+          "path": "$.status",
+          "expected": "active",
+          "actual": "active",
+          "message": "$.status equals \"active\"."
+        }
+      ]
+    },
+    {
+      "id": "complete-task-change-status",
+      "name": "Mark task completed",
+      "enabled": true,
+      "skipped": false,
+      "passed": true,
+      "type": null,
+      "tags": [],
+      "rationale": null,
+      "method": "PUT",
+      "path": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/status",
+      "url": "http://localhost:3000/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/status",
+      "status": 200,
+      "durationMs": 18,
+      "request": {
+        "method": "PUT",
+        "url": "http://localhost:3000/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/status",
+        "headers": {
+          "accept": "application/json",
+          "content-type": "application/json"
+        },
+        "bodyType": "json",
+        "body": {
+          "task": {
+            "id": "c3e59224-93d5-4b07-9317-6dc24eb586b3",
+            "status": "completed"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "connection": "keep-alive",
+          "content-length": "1013",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 04 Sep 2026 22:18:12 GMT",
+          "etag": "W/\"3f5-TI+M+ubLo41IfPvUbOQrtA7sGAs\"",
+          "keep-alive": "timeout=5",
+          "x-powered-by": "Express"
+        },
+        "body": {
+          "id": "c3e59224-93d5-4b07-9317-6dc24eb586b3",
+          "title": "Third Task",
+          "description": "Another example task",
+          "dueDate": "2025-06-15",
+          "status": "completed",
+          "priority": 5,
+          "assignedUser": "bob",
+          "_links": {
+            "self": {
+              "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3",
+              "method": "GET"
+            },
+            "edit": {
+              "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/edit",
+              "method": "POST",
+              "args": [
+                "id",
+                "title",
+                "description",
+                "dueDate",
+                "status",
+                "priority",
+                "assignedUser"
+              ]
+            },
+            "updateStatus": {
+              "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/status",
+              "method": "PUT",
+              "args": [
+                "id",
+                "status"
+              ]
+            },
+            "assignUser": {
+              "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/assignee",
+              "method": "PUT",
+              "args": [
+                "id",
+                "assignedUser"
+              ]
+            },
+            "setDueDate": {
+              "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/due-date",
+              "method": "PUT",
+              "args": [
+                "id",
+                "dueDate"
+              ]
+            },
+            "goHome": {
+              "href": "/",
+              "method": "GET"
+            },
+            "goTaskList": {
+              "href": "/tasks",
+              "method": "GET"
+            },
+            "goFilteredTasks": {
+              "href": "/tasks?status=&priority=&assignedUser=",
+              "method": "GET",
+              "args": [
+                "title",
+                "dueDate",
+                "status",
+                "priority",
+                "assignedUser"
+              ]
+            }
+          }
+        },
+        "rawBody": "{\"id\":\"c3e59224-93d5-4b07-9317-6dc24eb586b3\",\"title\":\"Third Task\",\"description\":\"Another example task\",\"dueDate\":\"2025-06-15\",\"status\":\"completed\",\"priority\":5,\"assignedUser\":\"bob\",\"_links\":{\"self\":{\"href\":\"/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3\",\"method\":\"GET\"},\"edit\":{\"href\":\"/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/edit\",\"method\":\"POST\",\"args\":[\"id\",\"title\",\"description\",\"dueDate\",\"status\",\"priority\",\"assignedUser\"]},\"updateStatus\":{\"href\":\"/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/status\",\"method\":\"PUT\",\"args\":[\"id\",\"status\"]},\"assignUser\":{\"href\":\"/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/assignee\",\"method\":\"PUT\",\"args\":[\"id\",\"assignedUser\"]},\"setDueDate\":{\"href\":\"/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/due-date\",\"method\":\"PUT\",\"args\":[\"id\",\"dueDate\"]},\"goHome\":{\"href\":\"/\",\"method\":\"GET\"},\"goTaskList\":{\"href\":\"/tasks\",\"method\":\"GET\"},\"goFilteredTasks\":{\"href\":\"/tasks?status=&priority=&assignedUser=\",\"method\":\"GET\",\"args\":[\"title\",\"dueDate\",\"status\",\"priority\",\"assignedUser\"]}}}"
+      },
+      "assertions": [
+        {
+          "passed": true,
+          "type": "status",
+          "target": "http",
+          "expected": 200,
+          "actual": 200,
+          "message": "Status is 200."
+        },
+        {
+          "passed": true,
+          "type": "equals",
+          "target": "json",
+          "path": "$.id",
+          "expected": "c3e59224-93d5-4b07-9317-6dc24eb586b3",
+          "actual": "c3e59224-93d5-4b07-9317-6dc24eb586b3",
+          "message": "$.id equals \"c3e59224-93d5-4b07-9317-6dc24eb586b3\"."
+        },
+        {
+          "passed": true,
+          "type": "equals",
+          "target": "json",
+          "path": "$.status",
+          "expected": "completed",
+          "actual": "completed",
+          "message": "$.status equals \"completed\"."
+        }
+      ]
+    },
+    {
+      "id": "complete-task-resulting-state",
+      "name": "Completed state persists",
+      "enabled": true,
+      "skipped": false,
+      "passed": true,
+      "type": null,
+      "tags": [],
+      "rationale": null,
+      "method": "GET",
+      "path": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3",
+      "url": "http://localhost:3000/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3",
+      "status": 200,
+      "durationMs": 4,
+      "request": {
+        "method": "GET",
+        "url": "http://localhost:3000/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3",
+        "headers": {
+          "accept": "application/json"
+        },
+        "bodyType": null,
+        "body": null
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "connection": "keep-alive",
+          "content-length": "1013",
+          "content-type": "application/json; charset=utf-8",
+          "date": "Fri, 04 Sep 2026 22:18:12 GMT",
+          "etag": "W/\"3f5-TI+M+ubLo41IfPvUbOQrtA7sGAs\"",
+          "keep-alive": "timeout=5",
+          "x-powered-by": "Express"
+        },
+        "body": {
+          "id": "c3e59224-93d5-4b07-9317-6dc24eb586b3",
+          "title": "Third Task",
+          "description": "Another example task",
+          "dueDate": "2025-06-15",
+          "status": "completed",
+          "priority": 5,
+          "assignedUser": "bob",
+          "_links": {
+            "self": {
+              "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3",
+              "method": "GET"
+            },
+            "edit": {
+              "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/edit",
+              "method": "POST",
+              "args": [
+                "id",
+                "title",
+                "description",
+                "dueDate",
+                "status",
+                "priority",
+                "assignedUser"
+              ]
+            },
+            "updateStatus": {
+              "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/status",
+              "method": "PUT",
+              "args": [
+                "id",
+                "status"
+              ]
+            },
+            "assignUser": {
+              "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/assignee",
+              "method": "PUT",
+              "args": [
+                "id",
+                "assignedUser"
+              ]
+            },
+            "setDueDate": {
+              "href": "/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/due-date",
+              "method": "PUT",
+              "args": [
+                "id",
+                "dueDate"
+              ]
+            },
+            "goHome": {
+              "href": "/",
+              "method": "GET"
+            },
+            "goTaskList": {
+              "href": "/tasks",
+              "method": "GET"
+            },
+            "goFilteredTasks": {
+              "href": "/tasks?status=&priority=&assignedUser=",
+              "method": "GET",
+              "args": [
+                "title",
+                "dueDate",
+                "status",
+                "priority",
+                "assignedUser"
+              ]
+            }
+          }
+        },
+        "rawBody": "{\"id\":\"c3e59224-93d5-4b07-9317-6dc24eb586b3\",\"title\":\"Third Task\",\"description\":\"Another example task\",\"dueDate\":\"2025-06-15\",\"status\":\"completed\",\"priority\":5,\"assignedUser\":\"bob\",\"_links\":{\"self\":{\"href\":\"/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3\",\"method\":\"GET\"},\"edit\":{\"href\":\"/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/edit\",\"method\":\"POST\",\"args\":[\"id\",\"title\",\"description\",\"dueDate\",\"status\",\"priority\",\"assignedUser\"]},\"updateStatus\":{\"href\":\"/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/status\",\"method\":\"PUT\",\"args\":[\"id\",\"status\"]},\"assignUser\":{\"href\":\"/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/assignee\",\"method\":\"PUT\",\"args\":[\"id\",\"assignedUser\"]},\"setDueDate\":{\"href\":\"/tasks/c3e59224-93d5-4b07-9317-6dc24eb586b3/due-date\",\"method\":\"PUT\",\"args\":[\"id\",\"dueDate\"]},\"goHome\":{\"href\":\"/\",\"method\":\"GET\"},\"goTaskList\":{\"href\":\"/tasks\",\"method\":\"GET\"},\"goFilteredTasks\":{\"href\":\"/tasks?status=&priority=&assignedUser=\",\"method\":\"GET\",\"args\":[\"title\",\"dueDate\",\"status\",\"priority\",\"assignedUser\"]}}}"
+      },
+      "assertions": [
+        {
+          "passed": true,
+          "type": "status",
+          "target": "http",
+          "expected": 200,
+          "actual": 200,
+          "message": "Status is 200."
+        },
+        {
+          "passed": true,
+          "type": "equals",
+          "target": "json",
+          "path": "$.status",
+          "expected": "completed",
+          "actual": "completed",
+          "message": "$.status equals \"completed\"."
+        }
+      ]
+    }
+  ]
+}
