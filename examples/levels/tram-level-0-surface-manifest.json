@@ -14,9 +14,13 @@
     "knownTaskId": "c3e59224-93d5-4b07-9317-6dc24eb586b3",
     "newTask": {
       "task": {
-        "id": "level-0-task-001",
+        "id": "${uuid}",
         "title": "Level 0 task",
-        "status": "active"
+        "status": "active",
+        "description" : "Level 0 create task test",
+        "dueDate" : "2026-09-01",
+        "priority" : 1,
+        "assignedUser" : "alice"
       }
     }
   },
@@ -134,6 +138,17 @@
       "expect": {
         "status": 200
       }
-    }
+    },
+    {
+      "name": "Remove Task item not supported (Express reports 404 instead of 405)",
+      "description": "Confirms that attempts to remove/delete known task resource is not supported (Express reports 404 instead of 405).",
+      "enabled": true,
+      "tags": ["level-0", "surface"],
+      "method": "DELETE",
+      "path": "/tasks/${data.knownTaskId}",
+      "expect": {
+        "status": 405
+      }
+    }    
   ]
 }

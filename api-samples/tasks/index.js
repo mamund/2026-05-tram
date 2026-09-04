@@ -32,7 +32,7 @@ let tasks = [
     title: 'Third Task',
     description: 'Another example task',
     dueDate: '2025-06-15',
-    status: 'completed',
+    status: 'active',
     priority: 5,
     assignedUser: 'bob'
   }

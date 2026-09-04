@@ -1,0 +1,88 @@
+{
+  "name": "Complete Task Behavior",
+  "manifestVersion": "0.2",
+  "version": "1.0.0",
+
+  "config": {
+    "baseUrl": "http://localhost:3000",
+    "defaultHeaders": {
+      "accept": "application/json"
+    }
+  },
+
+  "data": {
+    "task": {
+      "id": "c3e59224-93d5-4b07-9317-6dc24eb586b3",
+      "completed": {
+        "task": {
+          "id": "c3e59224-93d5-4b07-9317-6dc24eb586b3",
+          "status": "completed"
+        }
+      }
+    }
+  },
+
+  "tests": [
+    {
+      "id": "complete-task-initial-state",
+      "name": "Task initially exists and is active",
+      "method": "GET",
+      "path": "/tasks/${data.task.id}",
+      "expect": {
+        "status": 200,
+        "body": [
+          {
+            "path": "$.id",
+            "equals": "${data.task.id}"
+          },
+          {
+            "path": "$.status",
+            "equals": "active"
+          }
+        ]
+      }
+    },
+
+    {
+      "id": "complete-task-change-status",
+      "name": "Mark task completed",
+      "method": "PUT",
+      "path": "/tasks/${data.task.id}/status",
+      "headers": {
+        "content-type": "application/json"
+      },
+      "bodyType": "json",
+      "body": "$data.task.completed",
+      "expect": {
+        "status": 200,
+        "body": [
+          {
+            "path": "$.id",
+            "equals": "${data.task.id}"
+          },
+          {
+            "path": "$.status",
+            "equals": "completed"
+          }
+        ]
+      }
+    },
+
+    {
+      "id": "complete-task-resulting-state",
+      "name": "Completed state persists",
+      "method": "GET",
+      "path": "/tasks/${data.task.id}",
+      "expect": {
+        "status": 200,
+        "body": [
+          {
+            "path": "$.status",
+            "equals": "completed"
+          }
+        ]
+      }
+    }
+  ]
+}
+
